@@ -25,12 +25,62 @@ jobs:
           pip install pyinstaller
 
       - name: Build .exe
+        shell: cmd
         run: |
-          cd windows/deploy
-          pyinstaller --clean --noconfirm build_exe.spec
+          cd windows
+          pyinstaller --onefile --windowed ^
+            --add-data "config.json;." ^
+            --hidden-import keyring.backends.Windows ^
+            --hidden-import pystray._win32 ^
+            --hidden-import PIL._tkinter_finder ^
+            --hidden-import win32gui ^
+            --hidden-import win32process ^
+            --hidden-import winreg ^
+            --hidden-import psutil ^
+            --hidden-import tkinter ^
+            --hidden-import tkinter.simpledialog ^
+            --hidden-import requests ^
+            --hidden-import pydantic ^
+            --hidden-import network.auth_manager ^
+            --hidden-import network.gateway ^
+            --hidden-import network.sync_client ^
+            --hidden-import network.autostart ^
+            --hidden-import ui.tray_app ^
+            --hidden-import ui.setup_window ^
+            --hidden-import tracker ^
+            --hidden-import protocol_models ^
+            --name ScreenPlan ^
+            main.py
+        continue-on-error: true
+
+      - name: Build .exe (alt no windowed)
+        if: failure()
+        shell: cmd
+        run: |
+          cd windows
+          pyinstaller --onefile ^
+            --add-data "config.json;." ^
+            --hidden-import keyring.backends.Windows ^
+            --hidden-import pystray._win32 ^
+            --hidden-import win32gui ^
+            --hidden-import win32process ^
+            --hidden-import winreg ^
+            --hidden-import psutil ^
+            --hidden-import tkinter ^
+            --hidden-import tkinter.simpledialog ^
+            --hidden-import network.auth_manager ^
+            --hidden-import network.gateway ^
+            --hidden-import network.sync_client ^
+            --hidden-import network.autostart ^
+            --hidden-import ui.tray_app ^
+            --hidden-import ui.setup_window ^
+            --hidden-import tracker ^
+            --hidden-import protocol_models ^
+            --name ScreenPlan ^
+            main.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ScreenPlan-Windows
-          path: windows/deploy/dist/ScreenPlan.exe
+          path: windows/dist/ScreenPlan.exe
