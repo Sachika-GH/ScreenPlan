@@ -4,8 +4,10 @@ No popup alerts — network failures handled silently via offline queue.
 """
 import threading
 import time
+import json
 import sys
 from datetime import date, timedelta
+from pathlib import Path
 
 import rumps
 
@@ -39,6 +41,16 @@ class ScreenPlanTrayApp(rumps.App):
             self.tracker_thread.start()
         # Periodic status + offline queue flush
         rumps.Timer(self._on_tick, 60).start()
+
+    def _load_config(self) -> dict:
+        config_path = Path(__file__).resolve().parent.parent / "config.json"
+        if config_path.exists():
+            try:
+                with open(config_path, "r") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
 
     def _setup_menu(self):
         self.status_item = rumps.MenuItem("状态: 未连接", callback=None)

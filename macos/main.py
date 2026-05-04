@@ -2,11 +2,12 @@
 main.py - ScreenPlan macOS Agent entry point.
 
 Usage:
-    python3 main.py tray      # Run system tray app
-    python3 main.py daemon    # Run activity tracker daemon (no UI)
-    python3 main.py sync      # Sync yesterday's data to router
-    python3 main.py plan      # Generate and view today's plan
-    python3 main.py setup     # First-time setup wizard
+    python3 main.py tray              # Run system tray app
+    python3 main.py daemon            # Run activity tracker daemon (no UI)
+    python3 main.py sync              # Sync yesterday's data to router
+    python3 main.py plan              # Generate and view today's plan
+    python3 main.py setup             # First-time setup wizard
+    python3 main.py status            # Check agent and backend status
 """
 import argparse
 import sys
@@ -122,6 +123,12 @@ def cmd_daemon():
         return
 
     print(f"[main] Token loaded, device_id={device_id}")
+
+    config = {}
+    config_path = Path(__file__).resolve().parent / "config.json"
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            config = json.load(f)
 
     def on_record(entry: dict):
         """Callback: upload each recorded app event. Queues offline on failure."""
