@@ -8,6 +8,7 @@ Usage:
     python main.py status    # Check connection status
 """
 import argparse
+import os
 import sys
 import json
 from datetime import date, datetime
@@ -106,8 +107,16 @@ def cmd_status():
 
 
 def main():
+    # In windowed .exe mode (--noconsole), sys.stdout/stderr are None.
+    # Redirect to devnull to prevent argparse/print from crashing.
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, 'w')
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, 'w')
+
     parser = argparse.ArgumentParser(description="ScreenPlan Windows Agent")
-    parser.add_argument("command", choices=["tray", "daemon", "exe", "status"])
+    parser.add_argument("command", nargs="?", default="tray",
+                        choices=["tray", "daemon", "exe", "status"])
     args = parser.parse_args()
 
     commands = {
