@@ -13,10 +13,21 @@ function api(url, opts = {}) {
     return r.json();
   });
 }
-function fmtTime(iso) { const d = new Date(iso); return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }); }
+function fmtTime(iso) {
+  // Parse with Asia/Shanghai timezone if no timezone present
+  const d = parseTz(iso);
+  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
 function fmtDate(iso) { return iso?.split('T')[0] || ''; }
 function fmtMinutes(m) { return m >= 60 ? `${(m/60).toFixed(1)}h` : `${m}min`; }
 function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// Parse ISO timestamp assuming Asia/Shanghai if no timezone given
+function parseTz(iso) {
+  if (!iso) return new Date();
+  if (iso.includes('+') || iso.includes('Z') || iso.endsWith('z')) return new Date(iso);
+  return new Date(iso + '+08:00');
+}
 
 // Platform icon map
 const PLATFORM_ICONS = { macos: '&#9000;', windows: '&#9634;', ios: '&#9743;', android: '&#128241;', linux: '&#128187;' };
@@ -220,7 +231,7 @@ async function loadTimeline() {
 // Merge consecutive events of the same category
 function mergeTimelineEvents(events) {
   if (!events || !events.length) return [];
-  const sorted = [...events].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const sorted = [...events].sort((a,b) => parseTz(a.timestamp) - parseTz(b.timestamp));
   const merged = [];
   const MERGE_GAP_MIN = 4; // merge if gap <= 4 minutes
 
@@ -233,8 +244,8 @@ function mergeTimelineEvents(events) {
 
   for (let i = 1; i < sorted.length; i++) {
     const evt = sorted[i];
-    const prevEnd = new Date(current.end);
-    const thisStart = new Date(evt.timestamp);
+    const prevEnd = parseTz(current.end);
+    const thisStart = parseTz(evt.timestamp);
     const gapMin = (thisStart - prevEnd) / 60000;
 
     if (evt.category === current.category && gapMin <= MERGE_GAP_MIN) {
@@ -287,7 +298,7 @@ function computeDeviceStats(events) {
 
   const total = cats.learning + cats.entertainment + cats.other;
   const gapMinutes = firstTs && lastTs
-    ? Math.max(0, (new Date(lastTs) - new Date(firstTs)) / 60000)
+    ? Math.max(0, (parseTz(lastTs) - parseTz(firstTs)) / 60000)
     : 0;
 
   return {
@@ -402,8 +413,8 @@ function renderTimeline(data, date) {
     }
 
     for (const block of merged) {
-      const startD = new Date(block.start);
-      const endD = new Date(block.end);
+      const startD = parseTz(block.start);
+      const endD = parseTz(block.end);
       const startFrac = startD.getHours() + startD.getMinutes() / 60;
       const endFrac = endD.getHours() + endD.getMinutes() / 60;
       const left = (startFrac / HOURS * 100);
@@ -421,12 +432,12 @@ function renderTimeline(data, date) {
       const catLabel = cat === 'learning' ? '学习' : cat === 'entertainment' ? '娱乐' : '其他';
 
       const detail = `<span class="tip-title">${escHtml(appList)}</span>
-${catLabel}${durText}
-<span class="tip-time">${timeRange}</span>`;
+${escHtml(catLabel)}${escHtml(durText)}
+<span class="tip-time">${escHtml(timeRange)}</span>`;
 
       chartHtml += `<div class="timeline-block ${cat}"
         style="left:${left.toFixed(2)}%;width:${widthPct.toFixed(2)}%"
-        data-tooltip="${escHtml(detail)}"
+        data-tooltip="${detail.replace(/"/g, '&quot;')}"
         onmouseenter="showTooltip(event,this)" onmouseleave="hideTooltip()">
         <span class="block-dot"></span>
         <span class="block-label">${escHtml(label)}</span>
