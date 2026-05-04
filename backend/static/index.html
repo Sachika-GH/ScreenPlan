@@ -86,6 +86,12 @@
           <input type="date" id="timeline-date">
           <button class="nav-day" id="date-next" title="后一天">&rsaquo;</button>
         </div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoom-out" title="缩小">&minus;</button>
+          <span class="zoom-level" id="zoom-label">24h</span>
+          <button class="zoom-btn" id="zoom-in" title="放大">+</button>
+          <button class="zoom-btn now-btn" id="zoom-now" title="跳转到当前时间" style="display:none">&#9673; 现在</button>
+        </div>
         <button id="timeline-refresh">刷新</button>
       </div>
       <div id="timeline-summary" class="timeline-summary"></div>

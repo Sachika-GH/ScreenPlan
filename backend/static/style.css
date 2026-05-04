@@ -582,6 +582,68 @@ button:active { transform: scale(0.97); }
   color: var(--text-primary);
 }
 
+/* ─── Zoom Controls ──────────────────────────────────── */
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+}
+
+.zoom-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.zoom-btn:active { transform: scale(0.95); }
+
+.zoom-level {
+  min-width: 48px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue-600);
+  font-family: 'Outfit', sans-serif;
+  user-select: none;
+}
+
+.now-btn {
+  width: auto;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 4px;
+  margin-left: 4px;
+  color: var(--red-500);
+}
+
+.now-btn:hover {
+  background: var(--red-50);
+  color: var(--red-500);
+}
+
 #timeline-refresh {
   padding: 10px 20px;
   border-radius: var(--radius-md);
@@ -783,10 +845,13 @@ button:active { transform: scale(0.97); }
   position: relative;
   max-height: 650px;
   overflow-y: auto;
+  overflow-x: auto;
+  scroll-behavior: smooth;
 }
 
 .timeline-chart-body::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .timeline-chart-body::-webkit-scrollbar-track {

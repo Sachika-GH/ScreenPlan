@@ -196,12 +196,47 @@ function renderDeviceCards(s) {
 // Timeline
 // ═══════════════════════════════════════════════════════
 
+const ZOOM_LEVELS = [3, 6, 12, 24];
+let currentZoomIdx = 3; // default: 24h
+let timelineDate = '';
+
 $('#timeline-date').value = new Date().toISOString().split('T')[0];
 $('#timeline-refresh').addEventListener('click', loadTimeline);
 
 // Date navigation
 $('#date-prev').addEventListener('click', () => navigateDay(-1));
 $('#date-next').addEventListener('click', () => navigateDay(1));
+
+// Zoom controls
+$('#zoom-in').addEventListener('click', () => changeZoom(-1));
+$('#zoom-out').addEventListener('click', () => changeZoom(1));
+$('#zoom-now').addEventListener('click', scrollToNow);
+
+function changeZoom(delta) {
+  currentZoomIdx = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, currentZoomIdx + delta));
+  updateZoomUI();
+  if (timelineDate) loadTimeline();
+}
+
+function updateZoomUI() {
+  $('#zoom-label').textContent = ZOOM_LEVELS[currentZoomIdx] + 'h';
+  $('#zoom-in').disabled = currentZoomIdx === 0;
+  $('#zoom-out').disabled = currentZoomIdx === ZOOM_LEVELS.length - 1;
+  $('#zoom-now').style.display = currentZoomIdx < 3 ? 'flex' : 'none';
+}
+
+function scrollToNow() {
+  const body = document.querySelector('.timeline-chart-body');
+  if (!body) return;
+  const now = new Date();
+  const nowHour = now.getHours() + now.getMinutes() / 60;
+  const zoomHours = ZOOM_LEVELS[currentZoomIdx];
+  const totalWidth = body.scrollWidth - body.clientWidth;
+  const targetHour = Math.max(0, nowHour - zoomHours / 2);
+  const maxHour = 24 - zoomHours;
+  const clamped = Math.max(0, Math.min(maxHour, targetHour));
+  body.scrollLeft = (clamped / (24 - zoomHours)) * totalWidth;
+}
 
 function navigateDay(delta) {
   const input = $('#timeline-date');
@@ -214,6 +249,8 @@ function navigateDay(delta) {
 
 async function loadTimeline() {
   const date = $('#timeline-date').value;
+  timelineDate = date;
+  updateZoomUI();
   try {
     const data = await api('/usage/timeline/full?date=' + date);
     renderTimeline(data, date);
@@ -313,6 +350,11 @@ function computeDeviceStats(events) {
 
 function renderTimeline(data, date) {
   const devices = data.devices || [];
+  const zoomHours = ZOOM_LEVELS[currentZoomIdx];
+  const isZoomed = zoomHours < 24;
+  // Scale factor: how many px per hour relative to the 24h view
+  // Base: 24h occupies 100% of container. Zoomed: zoomHours occupies 100%.
+  const scale = 24 / zoomHours;
 
   // Show/hide legend
   const legend = $('#timeline-legend');
@@ -372,16 +414,16 @@ function renderTimeline(data, date) {
   $('#timeline-summary').innerHTML = summaryHtml;
 
   // Build the swimlane chart
-  const HOURS = 24;
+  const TOTAL_HOURS = 24;
   let chartHtml = '';
 
-  // Header with time axis
+  // Header with time axis — ticks cover full 24h scaled
   chartHtml += '<div class="timeline-chart-header">';
   chartHtml += '<div class="timeline-label">设备</div>';
-  chartHtml += '<div class="timeline-axis">';
-  for (let h = 0; h <= HOURS; h++) {
-    const pct = (h / HOURS * 100);
-    const isMajor = h % 3 === 0;
+  chartHtml += `<div class="timeline-axis" style="min-width:${scale * 600}px">`;
+  for (let h = 0; h <= TOTAL_HOURS; h++) {
+    const pct = (h / TOTAL_HOURS * 100);
+    const isMajor = h % (zoomHours <= 6 ? zoomHours : 3) === 0;
     chartHtml += `<div class="tick ${isMajor ? 'major' : 'minor'}" style="left:${pct}%"></div>`;
     if (isMajor) {
       chartHtml += `<div class="tick-label" style="left:${pct}%">${String(h).padStart(2,'0')}:00</div>`;
@@ -402,23 +444,23 @@ function renderTimeline(data, date) {
 
     chartHtml += `<div class="timeline-row">`;
     chartHtml += `<div class="timeline-label"><span class="dev-icon">${icon}</span><span class="dev-name-text">${escHtml(dev.device_name)}</span></div>`;
-    chartHtml += '<div class="timeline-track">';
+    chartHtml += `<div class="timeline-track" style="min-width:${scale * 600}px">`;
 
     // Today marker line
     if (isToday) {
       const now = new Date();
-      const nowFrac = now.getHours() + now.getMinutes() / 60;
-      const nowLeft = (nowFrac / HOURS * 100);
+      const nowFrac = (now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600);
+      const nowLeft = (nowFrac / TOTAL_HOURS * 100);
       chartHtml += `<div class="today-marker" style="left:${nowLeft.toFixed(2)}%"></div>`;
     }
 
     for (const block of merged) {
       const startD = parseTz(block.start);
       const endD = parseTz(block.end);
-      const startFrac = startD.getHours() + startD.getMinutes() / 60;
-      const endFrac = endD.getHours() + endD.getMinutes() / 60;
-      const left = (startFrac / HOURS * 100);
-      const widthPct = Math.max(0.5, (endFrac - startFrac) / HOURS * 100);
+      const startFrac = startD.getHours() + startD.getMinutes() / 60 + startD.getSeconds() / 3600;
+      const endFrac = endD.getHours() + endD.getMinutes() / 60 + endD.getSeconds() / 3600;
+      const left = (startFrac / TOTAL_HOURS * 100);
+      const widthPct = Math.max(0.3, (endFrac - startFrac) / TOTAL_HOURS * 100);
       const cat = block.category || 'other';
 
       const label = block.apps.length <= 2
@@ -449,6 +491,17 @@ ${escHtml(catLabel)}${escHtml(durText)}
 
   chartHtml += '</div>';
   $('#timeline-chart-wrap').innerHTML = chartHtml;
+
+  // Auto-scroll to "now" if zoomed and viewing today
+  if (isZoomed && isToday) {
+    setTimeout(scrollToNow, 100);
+  }
+
+  // Update axis min-width after render
+  if (isZoomed) {
+    const headers = $('#timeline-chart-wrap').querySelectorAll('.timeline-axis');
+    headers.forEach(h => h.style.minWidth = (scale * 600) + 'px');
+  }
 }
 
 // Tooltip
