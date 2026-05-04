@@ -56,7 +56,12 @@ fun DashboardScreen(
             StatusCard(
                 isTracking = uiState.isTracking,
                 backendOnline = uiState.backendOnline,
+                deviceId = uiState.deviceId,
+                serverUrl = uiState.serverUrl,
                 lastSync = uiState.lastSyncTime,
+                lastRecord = uiState.lastRecordTime,
+                lastUpload = uiState.lastUploadTime,
+                lastUploadOk = uiState.lastUploadOk,
                 queueSize = uiState.queueSize
             )
 
@@ -171,7 +176,12 @@ fun DashboardScreen(
 fun StatusCard(
     isTracking: Boolean,
     backendOnline: Boolean,
+    deviceId: Int?,
+    serverUrl: String,
     lastSync: String?,
+    lastRecord: String?,
+    lastUpload: String?,
+    lastUploadOk: Boolean?,
     queueSize: Int
 ) {
     Card(
@@ -207,22 +217,95 @@ fun StatusCard(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-            if (lastSync != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    modifier = Modifier.size(10.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = if (deviceId != null) Color(0xFF238636) else Color(0xFFDA3633)
+                ) {}
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (deviceId != null) "Device registered (ID: $deviceId)"
+                        else "Device NOT registered",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (deviceId == null) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (serverUrl.isNotBlank()) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Server: $serverUrl",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            if (lastRecord != null) {
                 Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Last record: $lastRecord",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Last record: --",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (lastUpload != null) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Last upload: $lastUpload",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (lastUpload == lastSync) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Last upload: --",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (lastUpload != null) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Last upload: $lastUpload" +
+                        if (lastUploadOk == true) " ✓" else if (lastUploadOk == false) " ✗" else "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (lastUploadOk == true) Color(0xFF238636)
+                        else if (lastUploadOk == false) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Last upload: --",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            if (lastSync != null) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Last sync: $lastSync",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            if (queueSize > 0) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Offline queue: $queueSize events",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Offline queue: $queueSize events",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (queueSize > 0) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.screenplan.agent.data.repository
 
+import android.util.Log
 import com.screenplan.agent.data.api.ScreenPlanApi
 import com.screenplan.agent.data.local.OfflineQueueDao
 import com.screenplan.agent.data.local.TokenManager
@@ -14,6 +15,10 @@ class SyncRepository @Inject constructor(
     private val tokenManager: TokenManager,
     private val trackingRepository: TrackingRepository
 ) {
+    companion object {
+        const val TAG = "ScreenPlanSync"
+    }
+
     suspend fun uploadSingleEvent(
         deviceId: Int,
         appName: String,
@@ -21,7 +26,12 @@ class SyncRepository @Inject constructor(
         category: String,
         timestamp: String
     ): Boolean {
-        val token = tokenManager.loadToken() ?: return false
+        val token = tokenManager.loadToken()
+        if (token == null) {
+            Log.w(TAG, "uploadSingleEvent: no token")
+            queueForRetry(deviceId, appName, appPackage, category, timestamp)
+            return false
+        }
 
         val event = TimelineEvent(
             appName = appName,
@@ -39,18 +49,22 @@ class SyncRepository @Inject constructor(
                 TimelineUploadRequest(deviceId, listOf(event))
             )
             if (resp.isSuccessful) {
+                Log.d(TAG, "uploadSingleEvent OK: $appName dev=$deviceId")
                 true
             } else {
+                val errBody = resp.errorBody()?.string() ?: "unknown"
+                Log.e(TAG, "uploadSingleEvent HTTP ${resp.code()}: $errBody")
                 queueForRetry(deviceId, appName, appPackage, category, timestamp)
                 false
             }
         } catch (e: Exception) {
+            Log.e(TAG, "uploadSingleEvent exception: ${e.javaClass.simpleName} ${e.message}")
             queueForRetry(deviceId, appName, appPackage, category, timestamp)
             false
         }
     }
 
-    private suspend fun queueForRetry(
+    suspend fun queueForRetry(
         deviceId: Int,
         appName: String,
         appPackage: String,
@@ -71,7 +85,11 @@ class SyncRepository @Inject constructor(
     suspend fun getQueueSize(): Int = offlineQueueDao.getCount()
 
     suspend fun flushOfflineQueue(deviceId: Int): Int {
-        val token = tokenManager.loadToken() ?: return 0
+        val token = tokenManager.loadToken()
+        if (token == null) {
+            Log.w(TAG, "flushOfflineQueue: no token")
+            return 0
+        }
         val queue = offlineQueueDao.getAll()
         if (queue.isEmpty()) return 0
 
@@ -95,11 +113,15 @@ class SyncRepository @Inject constructor(
             if (resp.isSuccessful) {
                 val ids = queue.map { it.id }
                 offlineQueueDao.deleteByIds(ids)
+                Log.d(TAG, "flushOfflineQueue OK: ${events.size} events")
                 events.size
             } else {
+                val errBody = resp.errorBody()?.string() ?: "unknown"
+                Log.e(TAG, "flushOfflineQueue HTTP ${resp.code()}: $errBody")
                 0
             }
         } catch (e: Exception) {
+            Log.e(TAG, "flushOfflineQueue exception: ${e.javaClass.simpleName} ${e.message}")
             0
         }
     }

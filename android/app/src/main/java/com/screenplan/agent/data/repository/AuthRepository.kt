@@ -72,10 +72,9 @@ class AuthRepository @Inject constructor(
                 deviceStateManager.saveDeviceId(id)
                 deviceStateManager.saveDeviceName(name)
                 Result.success(id)
-            } else if (resp.code() == 409) {
-                findExistingDevice(token)
             } else {
-                Result.failure(Exception(resp.errorBody()?.string() ?: "Device registration failed"))
+                // Server now deduplicates by platform, but keep fallback for safety
+                findExistingDevice(token)
             }
         } catch (e: Exception) {
             Result.failure(e)

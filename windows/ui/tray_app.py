@@ -1,9 +1,11 @@
 """
 tray_app.py - Windows system tray using pystray.
-No popup alerts. Menu updates correctly on toggle.
+Setup flow with tkinter login window, auto-start toggle, APPDATA persistence.
 """
+import os
 import threading
 import time
+from pathlib import Path
 
 import pystray
 from PIL import Image, ImageDraw
@@ -18,6 +20,9 @@ from network import (
     fetch_latest_schedule,
     get_backend_url,
     load_device_id,
+    save_device_id,
+    save_device_identity,
+    register_device,
     flush_offline_queue,
     get_queue_size,
 )
@@ -35,6 +40,7 @@ def create_tray_icon():
 
 class ScreenPlanTray:
     def __init__(self):
+        self.appdata = Path(os.environ.get("APPDATA", "")) / "ScreenPlan"
         try:
             self.token = load_token()
         except Exception:
@@ -47,10 +53,75 @@ class ScreenPlanTray:
         self.tracker_thread = None
         self.icon = None
 
+        if not self.token:
+            self._setup_flow()
+        elif not self.device_id:
+            self._device_naming_flow()
+
+    def _setup_flow(self):
+        from ui.setup_window import SetupWindow
+        SetupWindow(on_success=self._on_setup_complete)
+
+    def _on_setup_complete(self, token, display_name):
+        self.token = token
+        self._device_naming_flow()
+
+    def _device_naming_flow(self):
+        existing = self._find_existing_device()
+        if existing:
+            self.device_id = existing
+            save_device_id(existing)
+            save_device_identity(existing)
+            return
+
+        import tkinter as tk
+        from tkinter import simpledialog
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        name = simpledialog.askstring("ScreenPlan", "设备名称 (e.g. Gaming PC):", parent=root)
+        root.destroy()
+        if not name:
+            name = "WindowsPC"
+
+        device_id = register_device(self.token, name, "windows")
+        if device_id:
+            self.device_id = device_id
+            save_device_id(device_id)
+            save_device_identity(device_id)
+
+    def _find_existing_device(self):
+        url = get_backend_url()
+        if not url or not self.token:
+            return None
+        try:
+            import requests
+            r = requests.get(
+                f"{url}/api/devices",
+                headers={"Authorization": f"Bearer {self.token}"},
+                timeout=10,
+            )
+            for d in r.json():
+                if d.get("platform") == "windows":
+                    return d["id"]
+        except Exception:
+            pass
+        return None
+
+    def _check_setup(self):
+        return bool(self.token and self.device_id)
+
     def _make_menu(self):
         offline = get_queue_size()
         status_extra = f" (离线: {offline}条)" if offline else ""
         status_text = ("已登录" + status_extra) if self.token else "未登录"
+
+        try:
+            from network import autostart
+            auto_enabled = autostart.is_autostart_enabled()
+        except Exception:
+            auto_enabled = False
+        auto_text = "✅ 开机自启" if auto_enabled else "⬜ 开机自启"
 
         return pystray.Menu(
             pystray.MenuItem(f"状态: {status_text}", lambda: None, enabled=False),
@@ -58,12 +129,13 @@ class ScreenPlanTray:
             pystray.MenuItem("📋 查看最新计划", self._view_plan),
             pystray.MenuItem("🔄 生成今日计划", self._generate_plan),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem(auto_text, self._toggle_autostart),
             pystray.MenuItem("⏸ 暂停采集" if self.tracking else "▶️ 开始采集", self._toggle_tracking),
+            pystray.Menu.SEPARATOR,
             pystray.MenuItem("⏹ 退出", self._quit),
         )
 
     def _refresh_menu(self):
-        """Update the tray icon's menu in-place."""
         if self.icon:
             self.icon.menu = self._make_menu()
 
@@ -82,6 +154,17 @@ class ScreenPlanTray:
             self._refresh_menu()
         else:
             self._start_tracking()
+
+    def _toggle_autostart(self, icon, item):
+        try:
+            from network import autostart
+            if autostart.is_autostart_enabled():
+                autostart.disable_autostart()
+            else:
+                autostart.enable_autostart()
+            self._refresh_menu()
+        except Exception:
+            pass
 
     def _tracker_loop(self):
         token = load_token()
@@ -127,6 +210,8 @@ class ScreenPlanTray:
         icon.stop()
 
     def run(self):
+        if not self._check_setup():
+            return
         try:
             self.icon = pystray.Icon("screenplan", create_tray_icon(), "ScreenPlan", self._make_menu())
             self._start_tracking()

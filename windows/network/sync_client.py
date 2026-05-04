@@ -2,6 +2,7 @@
 sync_client.py - Syncs activity data to the ScreenPlan backend.
 """
 import json
+import os
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -13,7 +14,11 @@ from network.gateway import get_server_url
 from protocol_models import TimelineEvent, TimelineUploadRequest, AuthResponse, HealthResponse
 
 SYNC_TIMEOUT = 15
-OFFLINE_QUEUE_FILE = Path(__file__).resolve().parent.parent / "data" / "offline_queue.json"
+OFFLINE_QUEUE_FILE = (
+    Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming"))) / "ScreenPlan" / "offline_queue.json"
+    if getattr(sys, 'frozen', False)
+    else Path(__file__).resolve().parent.parent / "data" / "offline_queue.json"
+)
 
 
 def get_backend_url() -> Optional[str]:
@@ -83,7 +88,7 @@ def register_device(token: str, name: str, platform: str = "windows") -> Optiona
             headers={"Authorization": f"Bearer {token}"},
             timeout=SYNC_TIMEOUT,
         )
-        if resp.status_code == 201:
+        if resp.status_code in (200, 201):
             return resp.json()["id"]
         else:
             print(f"[sync] Device register failed: {resp.json()}", file=sys.stderr)

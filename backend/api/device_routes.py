@@ -62,15 +62,20 @@ def register_device():
     platform_val = data.platform.value if hasattr(data.platform, "value") else data.platform
 
     with db_connection() as conn:
+        # Check if user already has a device of this platform — reuse it
         existing = conn.execute(
-            "SELECT id, name, platform, registered_at FROM device WHERE user_id = ? AND name = ? AND platform = ?",
-            (g.user_id, data.name, platform_val),
+            "SELECT id, name, platform, registered_at FROM device WHERE user_id = ? AND platform = ?",
+            (g.user_id, platform_val),
         ).fetchone()
 
         if existing:
+            # Update name if different, return existing device (preserves data)
+            if existing["name"] != data.name:
+                conn.execute("UPDATE device SET name = ? WHERE id = ?", (data.name, existing["id"]))
+                conn.commit()
             resp = DeviceResponse(
                 id=existing["id"],
-                name=existing["name"],
+                name=data.name,
                 platform=existing["platform"],
                 registered_at=existing["registered_at"],
             )
@@ -114,11 +119,11 @@ def update_device(device_id):
             return jsonify({"error": "设备不存在"}), 404
 
         conflict = conn.execute(
-            "SELECT id FROM device WHERE user_id = ? AND name = ? AND platform = ? AND id != ?",
-            (g.user_id, data.name, device["platform"], device_id),
+            "SELECT id FROM device WHERE user_id = ? AND platform = ? AND id != ?",
+            (g.user_id, device["platform"], device_id),
         ).fetchone()
         if conflict:
-            return jsonify({"error": "同名同平台设备已存在"}), 409
+            return jsonify({"error": "同平台设备已存在"}), 409
 
         conn.execute(
             "UPDATE device SET name = ? WHERE id = ?",

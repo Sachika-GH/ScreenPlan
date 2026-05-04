@@ -4,7 +4,7 @@ main.py - ScreenPlan Windows Agent entry point.
 Usage:
     python main.py tray      # System tray app (GUI)
     python main.py daemon    # Background tracker (no UI)
-    python main.py setup     # First-time setup wizard
+    python main.py exe       # PyInstaller .exe entry point
     python main.py status    # Check connection status
 """
 import argparse
@@ -12,7 +12,6 @@ import sys
 import json
 from datetime import date, datetime
 from pathlib import Path
-from getpass import getpass
 
 from network import (
     health_check,
@@ -34,70 +33,12 @@ from network import (
 from tracker import run_tracker_loop
 
 
-def cmd_setup():
-    print("=" * 50)
-    print("  ScreenPlan Windows Agent - First Setup")
-    print("=" * 50)
-    print()
-
-    url = get_backend_url()
-    if not url:
-        print("No backend configured. Edit config.json server.url")
-        return
-
-    print(f"Backend: {url}")
-    health = health_check()
-    if health:
-        print(f"Backend online (v{health.version})")
-    else:
-        print("Backend unreachable. Check server and network.")
-        return
-
-    print()
-    choice = input("Existing account? (y/n): ").strip().lower()
-
-    if choice == "y":
-        email = input("Email: ").strip()
-        password = getpass("Password: ").strip()
-        resp = login(email, password)
-        if not resp:
-            print("Login failed.")
-            return
-    else:
-        family = input("Family name: ").strip()
-        email = input("Email: ").strip()
-        password = getpass("Password: ").strip()
-        display = input("Display name: ").strip()
-        resp = register(family, email, password, display)
-        if not resp:
-            print("Registration failed.")
-            return
-
-    save_token(resp.access_token)
-    print(f"Login successful! Welcome, {resp.display_name}")
-
-    device_name = input(f"\nDevice name (e.g. Gaming PC): ").strip() or "WindowsPC"
-    device_id = register_device(resp.access_token, device_name, "windows")
-    if device_id:
-        save_device_id(device_id)
-        print(f"Device registered (ID: {device_id})")
-    else:
-        print("Device registration failed, but continuing.")
-        # Try to get existing device ID from backend
-        try:
-            import requests
-            r = requests.get(f"{url}/api/devices", headers={"Authorization": f"Bearer {resp.access_token}"}, timeout=10)
-            for d in r.json():
-                if d["platform"] == "windows":
-                    save_device_id(d["id"])
-                    print(f"Found existing device (ID: {d['id']})")
-                    break
-        except Exception:
-            pass
-
-    print("\nSetup complete!")
-    print("  python main.py tray     -> Start system tray")
-    print("  python main.py daemon   -> Start background tracker")
+def cmd_exe():
+    """Entry point for .exe packaging (PyInstaller compatible)."""
+    import os
+    if getattr(sys, 'frozen', False):
+        os.chdir(os.path.dirname(sys.executable))
+    cmd_tray()
 
 
 def cmd_tray():
@@ -122,7 +63,7 @@ def cmd_daemon():
     device_id = load_device_id()
 
     if not token or not device_id:
-        print("[main] WARNING: Not logged in. Run 'python main.py setup' first.")
+        print("[main] WARNING: Not logged in. Launch the ScreenPlan tray app to set up.")
         print("[main] Running in offline mode - data saved locally only.")
         run_tracker_loop()
         return
@@ -166,13 +107,13 @@ def cmd_status():
 
 def main():
     parser = argparse.ArgumentParser(description="ScreenPlan Windows Agent")
-    parser.add_argument("command", choices=["tray", "daemon", "setup", "status"])
+    parser.add_argument("command", choices=["tray", "daemon", "exe", "status"])
     args = parser.parse_args()
 
     commands = {
         "tray": cmd_tray,
         "daemon": cmd_daemon,
-        "setup": cmd_setup,
+        "exe": cmd_exe,
         "status": cmd_status,
     }
     commands[args.command]()

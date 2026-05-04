@@ -12,6 +12,7 @@
 <!-- ═══ Login Page ═══ -->
 <div id="login-page" class="page active">
   <div class="login-box">
+    <div class="brand-mark"><span>S</span></div>
     <h1>ScreenPlan</h1>
     <p class="subtitle">跨设备屏幕时间 &middot; AI 日程规划</p>
     <div id="login-tabs">
@@ -19,17 +20,35 @@
       <button class="tab" data-tab="register-form">注册</button>
     </div>
     <form id="login-form" class="auth-form active">
-      <input type="email" id="login-email" placeholder="邮箱地址" required autocomplete="email">
-      <input type="password" id="login-password" placeholder="密码" required autocomplete="current-password">
-      <button type="submit">登 录</button>
+      <div class="field-group">
+        <label>邮箱地址</label>
+        <input type="email" id="login-email" placeholder="your@email.com" required autocomplete="email">
+      </div>
+      <div class="field-group">
+        <label>密码</label>
+        <input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary">登 录</button>
       <p id="login-error" class="error"></p>
     </form>
     <form id="register-form" class="auth-form">
-      <input type="text" id="reg-family" placeholder="家庭名称" required>
-      <input type="text" id="reg-display" placeholder="显示名称" required>
-      <input type="email" id="reg-email" placeholder="邮箱地址" required autocomplete="email">
-      <input type="password" id="reg-password" placeholder="密码（6位以上）" required autocomplete="new-password">
-      <button type="submit">注 册</button>
+      <div class="field-group">
+        <label>家庭名称</label>
+        <input type="text" id="reg-family" placeholder="例如：我的家庭" required>
+      </div>
+      <div class="field-group">
+        <label>显示名称</label>
+        <input type="text" id="reg-display" placeholder="你的名字" required>
+      </div>
+      <div class="field-group">
+        <label>邮箱地址</label>
+        <input type="email" id="reg-email" placeholder="your@email.com" required autocomplete="email">
+      </div>
+      <div class="field-group">
+        <label>密码（6位以上）</label>
+        <input type="password" id="reg-password" placeholder="至少6位" required autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn-primary">注 册</button>
       <p id="reg-error" class="error"></p>
     </form>
   </div>
@@ -40,7 +59,7 @@
 
   <!-- Sidebar -->
   <nav id="sidebar">
-    <div class="brand">ScreenPlan</div>
+    <div class="brand"><div class="brand-symbol">S</div>ScreenPlan</div>
     <div class="user-info">
       <span id="user-name"></span>
       <span id="user-email" class="muted"></span>

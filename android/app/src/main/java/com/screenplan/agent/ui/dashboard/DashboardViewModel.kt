@@ -22,15 +22,19 @@ import javax.inject.Inject
 data class DashboardUiState(
     val isLoggedIn: Boolean = false,
     val isTracking: Boolean = false,
+    val deviceId: Int? = null,
     val todayRecordCount: Int = 0,
     val learningCount: Int = 0,
     val entertainmentCount: Int = 0,
     val otherCount: Int = 0,
     val queueSize: Int = 0,
+    val lastUploadOk: Boolean? = null,
     val hasUsageStatsPermission: Boolean = false,
     val backendOnline: Boolean = false,
     val serverUrl: String = "",
     val lastSyncTime: String? = null,
+    val lastRecordTime: String? = null,
+    val lastUploadTime: String? = null,
     val isLoading: Boolean = false
 )
 
@@ -57,6 +61,12 @@ class DashboardViewModel @Inject constructor(
         checkBackendHealth()
 
         viewModelScope.launch {
+            deviceStateManager.deviceId.collect { id ->
+                _uiState.value = _uiState.value.copy(deviceId = id)
+            }
+        }
+
+        viewModelScope.launch {
             deviceStateManager.trackingEnabled.collect { enabled ->
                 _uiState.value = _uiState.value.copy(isTracking = enabled)
             }
@@ -65,6 +75,18 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             deviceStateManager.lastSyncTime.collect { time ->
                 _uiState.value = _uiState.value.copy(lastSyncTime = time)
+            }
+        }
+
+        viewModelScope.launch {
+            deviceStateManager.lastRecordTime.collect { time ->
+                _uiState.value = _uiState.value.copy(lastRecordTime = time)
+            }
+        }
+
+        viewModelScope.launch {
+            deviceStateManager.lastUploadTime.collect { time ->
+                _uiState.value = _uiState.value.copy(lastUploadTime = time)
             }
         }
 

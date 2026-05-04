@@ -20,7 +20,14 @@ except ImportError:
     _HAS_QUARTZ = False
 
 
+def _is_frozen() -> bool:
+    return getattr(sys, 'frozen', False)
+
+
 def get_project_root() -> Path:
+    if _is_frozen():
+        # py2app sets sys.argv[0] to Resources/main.py
+        return Path(sys.argv[0]).resolve().parent
     return Path(__file__).resolve().parent.parent
 
 

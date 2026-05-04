@@ -6,7 +6,6 @@ Usage:
     python3 main.py daemon            # Run activity tracker daemon (no UI)
     python3 main.py sync              # Sync yesterday's data to router
     python3 main.py plan              # Generate and view today's plan
-    python3 main.py setup             # First-time setup wizard
     python3 main.py status            # Check agent and backend status
 """
 import argparse
@@ -15,7 +14,6 @@ import json
 import time
 from datetime import date, timedelta
 from pathlib import Path
-from getpass import getpass
 
 from tracker import read_activity_log
 from network import (
@@ -39,63 +37,6 @@ from network import (
 from tracker import run_tracker_loop
 
 
-def cmd_setup():
-    """First-time setup wizard."""
-    print("=" * 50)
-    print("  ScreenPlan macOS Agent - 首次设置")
-    print("=" * 50)
-    print()
-
-    # Check backend
-    url = get_backend_url()
-    if not url:
-        print("❌ 未检测到路由器。请确保已连接到家庭 WiFi。")
-        return
-
-    print(f"路由器地址: {url}")
-    health = health_check()
-    if health:
-        print(f"✅ 后端在线 (v{health.version})")
-    else:
-        print("❌ 后端不可达。请检查路由器上的 ScreenPlan 服务是否运行。")
-        return
-
-    print()
-    choice = input("是否已有账户？(y/n): ").strip().lower()
-
-    if choice == "y":
-        email = input("邮箱: ").strip()
-        password = getpass("密码: ").strip()
-        resp = login(email, password)
-        if not resp:
-            print("❌ 登录失败。")
-            return
-    else:
-        family = input("家庭名称: ").strip()
-        email = input("邮箱: ").strip()
-        password = getpass("密码: ").strip()
-        display = input("显示名称: ").strip()
-        resp = register(family, email, password, display)
-        if not resp:
-            print("❌ 注册失败。")
-            return
-
-    save_token(resp.access_token)
-    print(f"✅ 登录成功! 欢迎, {resp.display_name}")
-
-    # Register device
-    device_name = input(f"\n此设备名称 (如 MacBook Pro): ").strip() or "Mac"
-    device_id = register_device(resp.access_token, device_name, "macos")
-    if device_id:
-        save_device_id(device_id)
-        print(f"✅ 设备已注册 (ID: {device_id})")
-    else:
-        print("⚠️ 设备注册失败，但可继续使用。")
-
-    print("\n设置完成！运行 python3 main.py tray 启动托盘应用。")
-    print("或运行 python3 main.py daemon 启动后台采集。")
-
-
 def cmd_tray():
     """Run the system tray application. Use --autostart to begin tracking immediately."""
     auto_start = "--autostart" in sys.argv
@@ -103,7 +44,7 @@ def cmd_tray():
         from ui import run_tray
         run_tray(auto_start_tracking=auto_start)
     except ImportError:
-        print("需要安装 rumps: pip3 install rumps", file=sys.stderr)
+        print("Need rumps: pip3 install rumps", file=sys.stderr)
         sys.exit(1)
 
 
@@ -117,7 +58,7 @@ def cmd_daemon():
     device_id = load_device_id()
 
     if not token or not device_id:
-        print("[main] WARNING: Not logged in. Run 'python3 main.py setup' first.")
+        print("[main] WARNING: Not logged in. Launch the ScreenPlan tray app to set up.")
         print("[main] Running in offline mode - data saved locally only.")
         run_tracker_loop()
         return
@@ -134,7 +75,6 @@ def cmd_daemon():
         """Callback: upload each recorded app event. Queues offline on failure."""
         upload_timeline_event(token, device_id, entry)
 
-    # Background flush thread — retries queued events every 60s
     def flush_loop():
         while True:
             time.sleep(60)
@@ -156,7 +96,8 @@ def cmd_sync():
     """Sync yesterday's data to the router."""
     token = load_token()
     if not token:
-        print("未登录。请先运行 python3 main.py setup")
+        print("Not logged in. Launch the ScreenPlan tray app to set up.")
+        return
 
     config = {}
     config_path = Path(__file__).resolve().parent / "config.json"
@@ -168,29 +109,27 @@ def cmd_sync():
     yesterday = date.today() - timedelta(days=1)
     records = read_activity_log(yesterday)
 
-    print(f"同步 {len(records)} 条记录...")
-    # device_id would be stored alongside token in a full implementation
-    # For now, we use a best-effort approach
-    ok = sync_yesterday(token, 1, records, interval)  # TODO: store device_id
-    print("✅ 同步完成" if ok else "❌ 同步失败")
+    print(f"Syncing {len(records)} records...")
+    ok = sync_yesterday(token, 1, records, interval)
+    print("Sync OK" if ok else "Sync FAILED")
 
 
 def cmd_plan():
     """Generate and display today's plan."""
     token = load_token()
     if not token:
-        print("未登录。请先运行 python3 main.py setup")
+        print("Not logged in. Launch the ScreenPlan tray app to set up.")
         return
 
-    print("正在生成今日计划...")
+    print("Generating today's plan...")
     plan = generate_schedule(token, include_calendar=True)
     if plan:
         print("\n" + "=" * 50)
         print(plan)
         print("=" * 50)
-        print("\n✅ 计划已保存到云端，访问 Web UI 查看")
+        print("\nPlan saved to cloud, view in Web UI")
     else:
-        print("❌ 计划生成失败。请检查路由器上的 LLM API Key 配置。")
+        print("Plan generation failed. Check LLM API Key config on router.")
 
 
 def cmd_status():
@@ -198,24 +137,28 @@ def cmd_status():
     print("ScreenPlan macOS Agent\n")
 
     token = load_token()
-    print(f"登录状态: {'✅ 已登录' if token else '❌ 未登录'}")
+    print(f"Login status: {'Logged in' if token else 'Not logged in'}")
 
     url = get_backend_url()
-    print(f"路由器地址: {url or '未检测到'}")
+    print(f"Backend URL: {url or 'Not detected'}")
 
     health = health_check()
     if health:
-        print(f"后端状态: ✅ 在线 (v{health.version}, {health.user_count} 用户)")
+        print(f"Backend: Online (v{health.version}, {health.user_count} users)")
     else:
-        print("后端状态: ❌ 不可达")
+        print("Backend: Unreachable")
 
 
 def main():
+    # When launched via double-clicked .app (py2app), no args are passed.
+    # Default to tray mode.
     parser = argparse.ArgumentParser(description="ScreenPlan macOS Agent")
     parser.add_argument(
         "command",
-        choices=["tray", "daemon", "sync", "plan", "setup", "status"],
-        help="运行模式",
+        nargs="?",
+        default="tray",
+        choices=["tray", "daemon", "sync", "plan", "status"],
+        help="Run mode (default: tray)",
     )
     args, unknown = parser.parse_known_args()
 
@@ -224,7 +167,6 @@ def main():
         "daemon": cmd_daemon,
         "sync": cmd_sync,
         "plan": cmd_plan,
-        "setup": cmd_setup,
         "status": cmd_status,
     }
     commands[args.command]()

@@ -15,6 +15,8 @@ DEFAULT_PORT = 5051
 
 
 def _get_config_path() -> Path:
+    if getattr(sys, 'frozen', False):
+        return Path(sys.argv[0]).resolve().parent / 'config.json'
     return Path(__file__).resolve().parent.parent / "config.json"
 
 

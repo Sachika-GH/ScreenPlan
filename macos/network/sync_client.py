@@ -20,7 +20,11 @@ from protocol_models import (
 BACKEND_PORT = 5051
 SYNC_TIMEOUT = 15
 
-OFFLINE_QUEUE_FILE = Path(__file__).resolve().parent.parent / "data" / "offline_queue.json"
+OFFLINE_QUEUE_FILE = (
+    Path.home() / "Library" / "Application Support" / "ScreenPlan" / "offline_queue.json"
+    if getattr(sys, 'frozen', False)
+    else Path(__file__).resolve().parent.parent / "data" / "offline_queue.json"
+)
 
 
 def get_backend_url() -> Optional[str]:
@@ -105,7 +109,7 @@ def register_device(token: str, name: str, platform: str = "macos") -> Optional[
             headers={"Authorization": f"Bearer {token}"},
             timeout=SYNC_TIMEOUT,
         )
-        if resp.status_code == 201:
+        if resp.status_code in (200, 201):
             return resp.json()["id"]
         else:
             print(f"[sync] Device register failed: {resp.json()}", file=sys.stderr)

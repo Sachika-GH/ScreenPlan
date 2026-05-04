@@ -30,7 +30,7 @@ interface ScreenPlanApi {
     suspend fun uploadTimeline(
         @Header("Authorization") token: String,
         @Body request: TimelineUploadRequest
-    ): Response<Void>
+    ): Response<Unit>
 
     @POST("api/schedule/generate")
     suspend fun generateSchedule(

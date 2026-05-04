@@ -104,6 +104,7 @@ def init_db(db_path: Optional[Path] = None) -> None:
         conn.commit()
         migrate_duplicate_devices(conn)
         migrate_platform_check(conn)
+        migrate_device_platform_unique(conn)
 
 
 def migrate_duplicate_devices(conn: sqlite3.Connection) -> None:
@@ -146,8 +147,42 @@ def migrate_platform_check(conn: sqlite3.Connection) -> None:
         INSERT INTO device_new SELECT id, user_id, name, platform, registered_at FROM device;
         DROP TABLE device;
         ALTER TABLE device_new RENAME TO device;
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_device_user_name_platform ON device(user_id, name, platform);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_device_user_platform ON device(user_id, platform);
     """)
+    conn.commit()
+
+
+def migrate_device_platform_unique(conn: sqlite3.Connection) -> None:
+    """Drop old (user_id, name, platform) unique index and replace with (user_id, platform).
+    Consolidate duplicates: keep the oldest device per (user_id, platform)."""
+    old_idx = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_device_user_name_platform'"
+    ).fetchone()
+    if not old_idx:
+        return
+
+    # Find duplicate devices per (user_id, platform) — keep the oldest
+    duplicates = conn.execute(
+        "SELECT user_id, platform, MIN(id) AS keep_id, COUNT(*) AS cnt "
+        "FROM device GROUP BY user_id, platform HAVING cnt > 1"
+    ).fetchall()
+
+    for dup in duplicates:
+        keep_id = dup["keep_id"]
+        dupe_rows = conn.execute(
+            "SELECT id FROM device WHERE user_id = ? AND platform = ? AND id != ?",
+            (dup["user_id"], dup["platform"], keep_id),
+        ).fetchall()
+        for row in dupe_rows:
+            dupe_id = row["id"]
+            conn.execute("UPDATE usage_record SET device_id = ? WHERE device_id = ?", (keep_id, dupe_id))
+            conn.execute("UPDATE timeline_event SET device_id = ? WHERE device_id = ?", (keep_id, dupe_id))
+            conn.execute("DELETE FROM device WHERE id = ?", (dupe_id,))
+        conn.commit()
+
+    # Drop old index and create new platform-unique index
+    conn.execute("DROP INDEX IF EXISTS idx_device_user_name_platform")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_device_user_platform ON device(user_id, platform)")
     conn.commit()
 
 
