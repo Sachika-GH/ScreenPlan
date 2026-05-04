@@ -1,6 +1,8 @@
 # ScreenPlan — AI 智能学习规划助手
 
-ScreenPlan 是一个全平台（macOS / Windows / Android）学习行为追踪与 AI 日程规划系统。通过追踪你在各设备上的应用使用行为，由后端 AI（DeepSeek）自动分析并生成个性化学习计划。
+ScreenPlan 是一个全平台（macOS / Windows / Android）学习行为追踪与 AI 日程规划系统。通过追踪你在各设备上的应用使用行为，由后端 AI 自动分析并生成个性化学习计划。
+
+## 架构
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
@@ -10,232 +12,200 @@ ScreenPlan 是一个全平台（macOS / Windows / Android）学习行为追踪�
        └────────────────┼────────────────┘
                         │  HTTP :5051
                  ┌──────┴──────┐
-                 │ Ubuntu VPS  │
-                 │  (Backend)  │
+                 │   后端 VPS    │
+                 │ (Flask + AI) │
                  └─────────────┘
 ```
 
----
+## 快速安装
 
-## 项目结构
+### 方式一：下载预构建包（推荐）
 
-```
-ScreenPlan/
-├── backend/          # Flask 后端（部署在 Ubuntu VPS）
-│   ├── api/          #   REST 路由 (auth/device/usage/schedule/friend)
-│   ├── deploy/       #   systemd + nginx 部署文件
-│   ├── static/       #   Web SPA 前端
-│   ├── app.py        #   Flask 入口
-│   └── requirements.txt
-├── macos/            # macOS 状态栏应用 + 后台服务
-│   ├── deploy/       #   launchd plist 文件
-│   ├── network/      #   网络同步、认证、网关检测
-│   ├── ui/           #   托盘 UI (rumps)
-│   └── main.py       #   入口 (setup/tray/daemon)
-├── windows/          # Windows 系统托盘应用
-│   ├── deploy/       #   Windows 服务/启动脚本
-│   ├── network/      #   网络同步
-│   └── main.py       #   入口
-└── android/          # Android 追踪应用 (Kotlin + Jetpack Compose)
-    ├── app/          #   应用代码
-    └── build.gradle.kts
-```
+| 平台 | 下载 | 说明 |
+|---|---|---|
+| 🖥 macOS | [ScreenPlan-v2.0.0-macos.zip](https://github.com/Sachika-GH/ScreenPlan/releases/latest/download/ScreenPlan-v2.0.0-macos.zip) | 解压后拖到 `/Applications`，双击启动 |
+| 🪟 Windows | [ScreenPlan-v2.0.0-windows.zip](https://github.com/Sachika-GH/ScreenPlan/releases/latest/download/ScreenPlan-v2.0.0-windows.zip) | 解压后双击 `ScreenPlan.exe` |
+| 📱 Android | [ScreenPlan-v2.0.0-android.apk](https://github.com/Sachika-GH/ScreenPlan/releases/latest/download/ScreenPlan-v2.0.0-android.apk) | 直接安装 APK |
+
+### 方式二：从源码构建
+
+参见下方各平台开发指南。
 
 ---
 
 ## 一、后端部署（Ubuntu VPS）
 
-后端负责接收所有客户端上传的活动数据，提供 AI 日程生成和 Web 管理面板。
-
 ### 环境要求
 
 - Ubuntu 20.04 / 22.04 / 24.04
 - Python 3.10+
-- 开放的端口：**5051** (API), **22** (SSH), ~~6374~~ (SSH 如更换)
+- 开放端口：**5051**（API）、**22**（SSH）
 
 ### 安装步骤
 
 ```bash
-# 1. 将后端代码上传到 VPS
-scp -r backend root@<你的VPS_IP>:/opt/
+# 1. 将 backend/ 目录上传到 VPS
+scp -r backend root@<你的VPS_IP>:/opt/screenplan-backend
 
-# 2. SSH 到 VPS，运行一键安装脚本
+# 2. SSH 到 VPS，运行安装脚本
 ssh root@<你的VPS_IP>
-bash /opt/backend/deploy/ubuntu_install.sh
+bash /opt/screenplan-backend/deploy/ubuntu_install.sh
 ```
 
-脚本会自动完成：
-- 安装 Python 依赖（Flask + gunicorn）
-- 创建 `screenplan` 系统用户
-- 注册 systemd 服务并启动
+脚本会自动：安装 Python 依赖、创建 `screenplan` 用户、注册 systemd 服务并启动。
 
-### 部署后检查
+### 配置 JWT 密钥和 AI API Key
 
-```bash
-# 查看服务状态
-systemctl status screenplan
-
-# 查看日志
-journalctl -u screenplan -f
-
-# 本地测试
-curl http://localhost:5051/api/health
-
-# 公网测试
-curl http://<你的VPS_IP>:5051/api/health
-```
-
-### 修改 JWT 密钥
-
-编辑 `/etc/systemd/system/screenplan.service`，修改 `SCREENPLAN_JWT_SECRET`：
+编辑 `/etc/systemd/system/screenplan.service`：
 
 ```bash
 sudo nano /etc/systemd/system/screenplan.service
-# 找到 SCREENPLAN_JWT_SECRET，改为随机 64 位 hex
+```
+
+修改环境变量：
+
+```
+Environment="SCREENPLAN_JWT_SECRET=<随机64位hex>"
+Environment="DEEPSEEK_API_KEY=<你的DeepSeek API Key>"
+Environment="SCREENPLAN_LLM_API_BASE=https://api.deepseek.com/v1"
+Environment="SCREENPLAN_LLM_MODEL=deepseek-chat"
+```
+
+应用更改：
+
+```bash
 sudo systemctl daemon-reload
 sudo systemctl restart screenplan
 ```
 
-### 防火墙开放端口
+### 验证部署
 
 ```bash
-# 如果使用了云服务商的安全组/防火墙，也需要在控制台放行 5051
+curl http://<你的VPS_IP>:5051/api/health
+# → {"status":"ok","version":"0.1.0","uptime_seconds":120,"user_count":1}
+```
+
+### 防火墙
+
+```bash
 sudo ufw allow 5051/tcp
 ```
 
+云服务商安全组/防火墙也需放行 5051 端口。
+
 ---
 
-## 二、macOS 客户端部署
+## 二、macOS 客户端
 
-macOS 客户端包含两部分：
-- **daemon**：后台活动追踪（每 3 分钟采样应用窗口）
-- **tray**：状态栏图标 + 右键菜单（查看 Dashboard / 计划 / 启停追踪）
+### 安装
 
-### 环境要求
+1. 下载 [ScreenPlan-v2.0.0-macos.zip](https://github.com/Sachika-GH/ScreenPlan/releases/latest/download/ScreenPlan-v2.0.0-macos.zip)
+2. 解压，将 `ScreenPlan.app` 拖入 `/Applications`
+3. 双击启动
 
-- macOS 10.15+ (Python 3.9+)
-- 辅助功能权限（系统偏好设置 → 隐私与安全性 → 辅助功能 → 添加 Terminal/Python）
+首次启动会弹出登录窗口。注册账号请访问 Web 面板（`http://<服务器IP>:5051`）。
 
-### 安装步骤
+### 功能
+
+- **系统托盘图标**：菜单栏右侧，右键菜单操作
+- **活动追踪**：每 3 分钟采样前台应用 + 浏览器标签 URL
+- **AI 日程生成**：基于使用行为 + 日历事件生成每日学习计划
+- **开机自启**：菜单中切换 "Auto-start"
+- **离线容错**：网络中断时存储本地，恢复后自动上传
+
+### 授权
+
+系统偏好设置 → 隐私与安全性 → 辅助功能 → 添加 ScreenPlan
+
+### 从源码运行
 
 ```bash
-# 1. 进入 macOS 项目目录
 cd macos
-
-# 2. 安装 Python 依赖
 pip3 install -r requirements.txt
-
-# 3. 修改后端地址
-# 编辑 config.json，将 url 改为你的 VPS 地址
-# "url": "http://<你的VPS_IP>:5051"
-
-# 4. 首次设置（注册/登录账号 + 注册设备）
-python3 main.py setup
-
-# 5. 安装 launchd 服务（开机自启）
-cd deploy
-bash install_launchd.sh
-```
-
-### 手动启动/停止
-
-```bash
-# 启动后台追踪
-python3 main.py daemon
-
-# 启动状态栏（会自动启动 daemon）
 python3 main.py tray
-
-# 停止所有服务
-launchctl unload ~/Library/LaunchAgents/com.screenplan.agent.plist
-launchctl unload ~/Library/LaunchAgents/com.screenplan.tray.plist
 ```
 
-### 查看运行日志
+### 自行打包 .app
 
 ```bash
-tail -f data/launchd.log    # daemon 日志
-tail -f data/tray.log       # tray 日志
+pip3 install py2app
+cd macos
+python3 setup.py py2app
+# 产物在 dist/ScreenPlan.app
 ```
 
 ---
 
-## 三、Windows 客户端部署
+## 三、Windows 客户端
 
-### 环境要求
+### 安装
 
-- Windows 10 / 11
-- Python 3.9+
-- 需安装 Python 后添加到 PATH
+1. 下载 [ScreenPlan-v2.0.0-windows.zip](https://github.com/Sachika-GH/ScreenPlan/releases/latest/download/ScreenPlan-v2.0.0-windows.zip)
+2. 解压，双击 `ScreenPlan.exe`
 
-### 安装步骤
+首次启动弹出登录窗口（Web UI 同款配色）。注册账号请访问 Web 面板。
+
+### 功能
+
+- **系统托盘图标**：任务栏通知区，右键菜单操作
+- **活动追踪**：每 3 分钟检测前台窗口进程
+- **AI 日程生成**
+- **开机自启**：菜单中切换，通过注册表实现
+- **离线容错**
+
+### 从源码运行
 
 ```bash
-# 1. 进入 Windows 项目目录
 cd windows
-
-# 2. 安装 Python 依赖
 pip install -r requirements.txt
-
-# 3. 修改后端地址
-# 编辑 config.json，将 url 改为你的 VPS 地址
-# "url": "http://<你的VPS_IP>:5051"
-
-# 4. 首次设置（注册/登录账号 + 注册设备）
-python main.py setup
-
-# 5. 启动（按需）
-python main.py tray    # 带系统托盘的完整模式
-python main.py daemon  # 仅后台追踪
-
-# 6. 配置开机自启
-# 将 deploy/install_windows.bat 快捷方式放入启动文件夹：
-# Win+R → shell:startup → 粘贴快捷方式
+python main.py tray
 ```
 
-### 管理服务
+### 自行打包 .exe
 
-系统托盘右键菜单提供：
-- **Open Dashboard** — 打开 Web 管理面板
-- **Start / Stop Tracking** — 启停追踪
-- **View Schedule** — 查看 AI 计划
-- **Quit** — 退出
+```bash
+pip install pyinstaller
+cd windows
+pyinstaller --onefile --windowed ^
+  --add-data "config.json;." ^
+  --hidden-import keyring.backends.Windows ^
+  --hidden-import pystray._win32 ^
+  --hidden-import win32gui ^
+  --hidden-import win32process ^
+  --hidden-import psutil ^
+  --hidden-import network.auth_manager ^
+  --hidden-import network.gateway ^
+  --hidden-import network.sync_client ^
+  --hidden-import network.autostart ^
+  --hidden-import ui.tray_app ^
+  --hidden-import ui.setup_window ^
+  --name ScreenPlan ^
+  main.py
+```
+
+CI 自动打包：[GitHub Actions](https://github.com/Sachika-GH/ScreenPlan/actions/workflows/build-windows.yml)
 
 ---
 
-## 四、Android 客户端部署
+## 四、Android 客户端
 
-### 安装方式一：下载 APK 直接安装
+### 安装
 
-1. 下载 [ScreenPlanAgent-v1.0.0.apk](https://github.com/<你的用户名>/ScreenPlan/releases) 到手机
-2. 安装前开启「允许安装未知来源应用」
-3. 首次打开后登录或注册账号
-4. 授予「使用情况访问权限」（设置 → 安全 → 使用情况访问权限 → ScreenPlan → 允许）
+1. 下载 [ScreenPlan-v2.0.0-android.apk](https://github.com/Sachika-GH/ScreenPlan/releases/latest/download/ScreenPlan-v2.0.0-android.apk)
+2. 开启「允许安装未知来源应用」
+3. 安装后打开，登录或注册账号
 
-### 安装方式二：自行编译
+### 必需权限
 
-```bash
-# 环境要求
-# - Android Studio (或 JDK 17 + Android SDK)
-# - Android SDK Platform 35
-# - Build Tools 34+
+| 权限 | 设置路径 |
+|---|---|
+| 使用情况访问 | 设置 → 安全 → 使用情况访问权限 → ScreenPlan ✓ |
+| 通知权限 | 首次启动自动弹窗请求（Android 13+） |
+| 电池优化 | 设置 → 应用 → ScreenPlan → 电池 → 不限制 |
 
-cd android
+### 开机自启（防杀）
 
-# Mac / Linux
-./gradlew assembleDebug
-
-# Windows
-gradlew.bat assembleDebug
-
-# APK 位于: app/build/outputs/apk/debug/app-debug.apk
-```
-
-### 开启开机自启（防止被系统杀）
-
-不同品牌 ROM 需手动设置：
-
-| 品牌 | 设置路径 |
+| 品牌 | 路径 |
 |---|---|
 | 小米/Redmi | 安全中心 → 应用管理 → 权限 → 自启动管理 → ScreenPlan ✓ |
 | OPPO/一加 | 设置 → 应用 → 自启动 → ScreenPlan ✓ |
@@ -243,56 +213,96 @@ gradlew.bat assembleDebug
 | 华为/荣耀 | 手机管家 → 应用启动管理 → ScreenPlan → 手动管理（全勾） |
 | 三星/原生 | 设置 → 应用 → ScreenPlan → 电池 → 不限制 |
 
-所有设备都建议：最近任务中锁定 ScreenPlan，并关闭电池优化。
+> 所有设备建议：最近任务中锁定 ScreenPlan，关闭电池优化。
 
-### 数据同步频率
+### 自行编译
 
-Android 客户端每 15 分钟通过 WorkManager 定期上传活动数据到后端。
+```bash
+cd android
+export ANDROID_HOME=~/Library/Android/sdk
+export JAVA_HOME=/path/to/jdk17
+./gradlew assembleDebug
+# APK: app/build/outputs/apk/debug/app-debug.apk
+```
 
 ---
 
 ## 五、Web 管理面板
 
-后端自带 SPA 前端，部署后直接访问：
+后端自带 Web SPA，部署后直接访问：
 
 ```
 http://<你的VPS_IP>:5051
 ```
 
-功能包括：
-- 当日活动时间线（所有设备聚合）
-- 学习 / 娱乐 / 其他分类统计
-- AI 每日学习计划
-- 好友系统（共享使用数据和计划）
+功能：
+- 📊 当日活动时间线（全设备聚合，swimlane 泳道图）
+- 📈 学习 / 娱乐 / 其他分类统计
+- 🤖 AI 每日学习计划（支持 Pomodoro）
+- 👥 好友系统（共享使用数据和计划）
+- 📱 设备管理（注册 / 编辑 / 删除）
 
 ---
 
-## 六、常见问题
+## 六、配置说明
 
-**Q: 设备注册失败 ("Token 无效或已过期")**  
-A: 通常是 PyJWT 版本兼容问题。确认后端 `requirements.txt` 中的 `pyjwt>=2.8` 已安装，`auth.py` 中的 JWT `sub` 字段已转为字符串。
+### 修改服务器地址
 
-**Q: 后端健康检查通过但登录返回 401**  
-A: 检查 gunicorn service 的 `ReadWritePaths` 配置，`ProtectSystem=strict` 需放行工作目录：`ReadWritePaths=/opt/screenplan-backend/data /opt/screenplan-backend`
+各端 `config.json` 中的 `server.url` 字段：
 
-**Q: Android 应用闪退**  
-A: 可能是不支持硬件加密存储。最新版本已添加 `EncryptedSharedPreferences` → 普通 `SharedPreferences` 的降级方案。
+```json
+{
+  "server": {
+    "url": "http://45.197.150.197:5051"
+  }
+}
+```
 
-**Q: macOS 追踪不到应用**  
-A: 确认已授予辅助功能权限（系统偏好设置 → 隐私与安全性 → 辅助功能），并重启应用。
+优先级：`config.json` > `SCREENPLAN_SERVER_URL` 环境变量 > 局域网网关自动检测。
+
+### 应用分类配置
+
+`config.json` 中 `tracker.learning_apps` 和 `tracker.entertainment_apps` 列表控制应用分类。浏览器标签页中的娱乐域名由 `url_rules.entertainment_domains` 覆盖判定。
 
 ---
 
-## 技术栈
+## 七、数据安全与重装
+
+- **设备去重**：同一用户同平台只有一台设备记录。卸载重装后登录，自动复用原设备 ID，历史数据不会丢失。
+- **离线队列**：网络中断时数据存入本地，恢复后自动批量上传。
+- **JWT 认证**：30 天过期，密钥在服务端配置。
+
+---
+
+## 八、技术栈
 
 | 层级 | 技术 |
 |---|---|
 | 后端 | Flask + gunicorn + SQLite + PyJWT |
-| AI | DeepSeek API (可替换为 OpenAI 兼容接口) |
-| macOS | Python + rumps + pyobjc (AppKit/Quartz) |
+| AI | DeepSeek API（兼容 OpenAI 接口） |
+| macOS | Python + rumps + pyobjc |
 | Windows | Python + pystray + win32gui |
 | Android | Kotlin + Jetpack Compose + Room + Hilt + WorkManager |
 | Web | 原生 HTML/CSS/JS SPA |
+
+---
+
+## 九、常见问题
+
+**Q: macOS 应用无法启动**  
+A: 确认辅助功能权限已授予，并清理旧的 launchd plist（`~/Library/LaunchAgents/com.screenplan.*`）。
+
+**Q: Android 通知栏不显示**  
+A: Android 13+ 需授予通知权限。首次启动自动请求，或去设置 → 应用 → ScreenPlan → 通知 → 允许。
+
+**Q: Android upload 不发送**  
+A: 检查 Dashboard 上的 Device 状态是否为绿。若为红，重新走一遍登录+设备命名流程。
+
+**Q: 重装后数据丢失**  
+A: 不会。服务端按 `(user_id, platform)` 去重，同平台设备复用旧 ID，所有历史数据保留。
+
+**Q: AI 计划生成失败**  
+A: 确认 VPS 上已配置正确的 `DEEPSEEK_API_KEY`，且服务器可访问 DeepSeek API。
 
 ---
 
