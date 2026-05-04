@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ScreenPlan — UI Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8FAFC;
+  --bg-tertiary: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --blue-700: #1D4ED8;
+  --blue-600: #2563EB;
+  --blue-500: #3B82F6;
+  --blue-400: #60A5FA;
+  --blue-300: #93C5FD;
+  --blue-200: #BFDBFE;
+  --blue-100: #DBEAFE;
+  --blue-50: #EFF6FF;
+  --slate-200: #E2E8F0;
+  --slate-300: #CBD5E1;
+  --slate-400: #94A3B8;
+  --slate-500: #64748B;
+  --red-500: #EF4444;
+  --red-400: #F87171;
+  --red-50: #FEF2F2;
+  --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.04);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, .brand, .nav-link, button, .btn-sm {
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-weight: 600;
+}
+
+/* ─── Layout ─── */
+.page { display: none; }
+.page.active { display: flex; }
+
+#demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: var(--blue-600);
+  color: #fff;
+  text-align: center;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+#demo-banner + #main-page { padding-top: 32px; }
+#demo-banner + #main-page > #sidebar { top: 32px; height: calc(100vh - 32px); }
+
+#main-page { display: none; min-height: 100vh; position: relative; }
+#main-page.active { display: flex; }
+
+/* ─── Sidebar ─── */
+#sidebar {
+  width: 260px;
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  padding: 28px 24px 20px;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  margin: 0 16px 20px;
+  padding: 14px 16px;
+  background: var(--blue-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--blue-100);
+}
+
+.user-info #user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue-700);
+}
+
+.user-info #user-email {
+  font-size: 12px;
+  color: var(--blue-500);
+}
+
+.muted { color: var(--text-tertiary); font-size: 12px; }
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  padding: 0 12px;
+}
+
+.nav-link {
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-link:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.nav-link.active {
+  background: var(--blue-50);
+  color: var(--blue-600);
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+#logout-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition);
+}
+
+#logout-btn:hover {
+  background: var(--red-50);
+  color: var(--red-500);
+  border-color: var(--red-500);
+}
+
+/* ─── Main Content ─── */
+main {
+  flex: 1;
+  margin-left: 260px;
+  padding: 36px 40px;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+.content { display: none; }
+.content.active { display: block; }
+
+h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 24px 0 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
+}
+
+/* ─── Buttons ─── */
+button, .btn-sm {
+  cursor: pointer;
+  font-family: 'Outfit', 'Noto Sans SC', sans-serif;
+  font-weight: 600;
+  transition: all var(--transition);
+  border: none;
+}
+
+button:active { transform: scale(0.97); }
+
+.btn-sm {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ─── Cards ─── */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.card .label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.card .value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.card .value span {
+  font-size: 16px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.card .sub {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.card .accent-line {
+  height: 3px;
+  border-radius: 3px;
+  margin-top: 14px;
+}
+
+.card .accent-line.blue { background: var(--blue-500); }
+.card .accent-line.blue-light { background: var(--blue-300); }
+
+/* ─── Dashboard ─── */
+.device-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 16px;
+}
+
+.device-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.device-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.device-card .device-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.device-card .device-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.platform-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--blue-50);
+  color: var(--blue-600);
+  letter-spacing: 0.3px;
+}
+
+.device-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: var(--bg-tertiary);
+}
+
+.device-bar .learning { background: var(--blue-600); }
+.device-bar .entertainment { background: var(--blue-300); }
+.device-bar .other { background: var(--slate-300); }
+
+.top-apps { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light); }
+
+.top-apps .app-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.top-apps .app-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ─── Timeline ─── */
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.date-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.date-picker input[type="date"] {
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.date-picker button.nav-day {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+}
+
+.date-picker button.nav-day:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+#timeline-refresh {
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+#timeline-refresh:hover { background: var(--blue-700); }
+
+.timeline-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.timeline-device-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), border-color var(--transition);
+  cursor: default;
+}
+
+.timeline-device-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--blue-200);
+}
+
+.timeline-device-card .tdc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.timeline-device-card .tdc-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--blue-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--blue-600);
+  flex-shrink: 0;
+}
+
+.timeline-device-card .tdc-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.timeline-device-card .tdc-platform {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.timeline-device-card .tdc-stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.timeline-device-card .tdc-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-device-card .tdc-stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.timeline-device-card .tdc-stat-lbl {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timeline-device-card .tdc-bar {
+  height: 4px;
+  border-radius: 2px;
+  display: flex;
+  overflow: hidden;
+  margin-top: 10px;
+  background: var(--bg-tertiary);
+}
+
+.timeline-device-card .tdc-bar .learning { background: var(--blue-600); }
+.timeline-device-card .tdc-bar .entertainment { background: var(--blue-300); }
+.timeline-device-card .tdc-bar .other { background: var(--slate-300); }
+
+/* ─── Timeline Chart ─── */
+#timeline-chart-wrap {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.timeline-chart-header {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.timeline-chart-header .timeline-label {
+  width: 170px;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+
+.timeline-chart-header .timeline-axis {
+  flex: 1;
+  height: 44px;
+  position: relative;
+  min-width: 600px;
+}
+
+.timeline-axis .tick {
+  position: absolute;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.timeline-axis .tick.major { height: 24px; }
+.timeline-axis .tick.minor { height: 12px; }
+
+.timeline-axis .tick-label {
+  position: absolute;
+  bottom: 26px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.timeline-chart-body {
+  position: relative;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-light);
+  min-height: 48px;
+  transition: background var(--transition);
+}
+
+.timeline-row:hover { background: var(--blue-50); }
+
+.timeline-row .timeline-label {
+  width: 170px;
+  flex-shrink: 0;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-primary);
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.timeline-row .timeline-label .dev-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.timeline-row .timeline-label .dev-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-track {
+  flex: 1;
+  height: 48px;
+  position: relative;
+  min-width: 600px;
+}
+
+.timeline-track::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent calc(100% / 24 - 1px),
+      var(--border-light) calc(100% / 24 - 1px),
+      var(--border-light) calc(100% / 24)
+    );
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.timeline-block {
+  position: absolute;
+  top: 8px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity var(--transition), box-shadow var(--transition);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  min-width: 24px;
+}
+
+.timeline-block:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 5;
+}
+
+.timeline-block.learning { background: var(--blue-600); }
+.timeline-block.entertainment { background: var(--blue-300); }
+.timeline-block.other { background: var(--slate-300); }
+
+.timeline-block .block-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--text-primary);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.timeline-tooltip.visible { opacity: 1; }
+
+.today-marker {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--red-400);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.today-marker::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red-500);
+  border: 2px solid #fff;
+}
+
+.today-marker::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: -6px; right: -6px; bottom: -1px;
+  background: rgba(239, 68, 68, 0.06);
+  pointer-events: none;
+}
+
+.timeline-empty {
+  padding: 60px 40px;
+  text-align: center;
+}
+
+.timeline-empty .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.timeline-empty .empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.timeline-empty .empty-desc {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+/* ─── Legend ─── */
+.legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  align-items: center;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 7px;
+}
+
+.dot.learning { background: var(--blue-600); }
+.dot.entertainment { background: var(--blue-300); }
+.dot.other { background: var(--slate-300); }
+
+/* ─── Schedule ─── */
+.schedule-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+#generate-schedule-btn {
+  padding: 11px 24px;
+  border-radius: var(--radius-md);
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+}
+
+#generate-schedule-btn:hover { background: var(--blue-700); }
+
+.markdown-body {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  line-height: 1.8;
+  font-size: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.markdown-body h2 {
+  font-size: 20px;
+  color: var(--blue-600);
+  margin: 16px 0 8px;
+}
+
+.markdown-body h3 {
+  color: var(--blue-600);
+  font-size: 16px;
+  margin: 20px 0 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 20px 0;
+}
+
+.markdown-body blockquote {
+  color: var(--text-secondary);
+  border-left: 3px solid var(--blue-300);
+  padding: 4px 16px;
+  margin: 10px 0;
+  background: var(--blue-50);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.markdown-body ul { list-style: none; padding: 0; }
+.markdown-body li { margin: 6px 0; color: var(--text-primary); }
+.markdown-body .empty { color: var(--text-tertiary); font-style: italic; }
+
+/* ─── Friends ─── */
+.friend-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.friend-actions input {
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  flex: 1;
+  max-width: 320px;
+  outline: none;
+  transition: border var(--transition), box-shadow var(--transition);
+}
+
+.friend-actions input:focus {
+  border-color: var(--blue-400);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#send-friend-request {
+  padding: 11px 22px;
+  border-radius: var(--radius-md);
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+#send-friend-request:hover { background: var(--blue-700); }
+
+.request-card, .friend-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition);
+}
+
+.request-card:hover, .friend-card:hover { box-shadow: var(--shadow-md); }
+
+.request-card .info, .friend-card .info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.request-card .name, .friend-card .name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.request-card .email, .friend-card .email {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.request-card .actions, .friend-card .actions { display: flex; gap: 8px; }
+
+.btn-accept { background: var(--blue-600); color: #fff; }
+.btn-accept:hover { background: var(--blue-700); }
+
+.btn-deny { background: var(--bg-tertiary); color: var(--text-secondary); }
+.btn-deny:hover { background: var(--slate-200); }
+
+.btn-remove { background: var(--red-50); color: var(--red-500); border: 1px solid var(--red-500); }
+.btn-remove:hover { background: var(--red-500); color: #fff; }
+
+.share-toggles {
+  display: flex;
+  gap: 14px;
+  margin-right: 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.share-toggles label {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.share-toggles input[type="checkbox"] { accent-color: var(--blue-600); }
+
+/* ─── Device Management ─── */
+.device-register-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.device-register-form input {
+  padding: 11px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  flex: 1;
+  max-width: 260px;
+  outline: none;
+  transition: border var(--transition), box-shadow var(--transition);
+}
+
+.device-register-form input:focus {
+  border-color: var(--blue-400);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.device-register-form select {
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+#register-device-btn {
+  padding: 11px 24px;
+  border-radius: var(--radius-md);
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#register-device-btn:hover { background: var(--blue-700); }
+
+.device-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition);
+}
+
+.device-item:hover { box-shadow: var(--shadow-md); }
+
+.device-item-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.device-item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.device-item-date {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.device-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.device-item-actions .btn-sm {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.device-item-actions .btn-sm:hover {
+  background: var(--slate-200);
+  color: var(--text-primary);
+}
+
+#view-friend-schedule-btn {
+  padding: 11px 22px;
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--blue-600);
+  border: 1px solid var(--blue-200);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+#view-friend-schedule-btn:hover {
+  background: var(--blue-50);
+  border-color: var(--blue-300);
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.card, .device-card, .timeline-device-card, .device-item, .request-card, .friend-card {
+  animation: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.card:nth-child(1) { animation-delay: 0.02s; }
+.card:nth-child(2) { animation-delay: 0.06s; }
+.card:nth-child(3) { animation-delay: 0.10s; }
+.card:nth-child(4) { animation-delay: 0.14s; }
+
+.device-card:nth-child(1) { animation-delay: 0.04s; }
+.device-card:nth-child(2) { animation-delay: 0.08s; }
+.device-card:nth-child(3) { animation-delay: 0.12s; }
+
+.timeline-device-card:nth-child(1) { animation-delay: 0.02s; }
+.timeline-device-card:nth-child(2) { animation-delay: 0.06s; }
+.timeline-device-card:nth-child(3) { animation-delay: 0.10s; }
+
+.timeline-row { animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.timeline-row:nth-child(2) { animation-delay: 0.05s; }
+.timeline-row:nth-child(3) { animation-delay: 0.10s; }
+.timeline-row:nth-child(4) { animation-delay: 0.15s; }
+
+/* ─── Responsive ─── */
+@media (max-width: 900px) {
+  #sidebar {
+    width: 100%; position: relative; height: auto;
+    flex-direction: row; flex-wrap: wrap; padding: 12px; gap: 8px; align-items: center;
+  }
+  .brand { padding: 8px 4px; font-size: 18px; }
+  .user-info { margin: 0; padding: 8px 12px; }
+  .nav-links { flex-direction: row; padding: 0; }
+  .sidebar-footer { padding: 8px; border: none; }
+  main { margin-left: 0; padding: 20px 16px; }
+  .summary-cards { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .device-cards { grid-template-columns: 1fr; }
+  .timeline-chart-header .timeline-label,
+  .timeline-row .timeline-label { width: 120px; padding: 0 12px; font-size: 12px; }
+  .timeline-track { min-width: 400px; }
+  .timeline-summary { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .nav-links { flex-wrap: wrap; }
+  .nav-link { font-size: 12px; padding: 8px 10px; }
+  .timeline-summary { grid-template-columns: 1fr; }
+  h2 { font-size: 22px; }
+  .card .value { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Demo Banner -->
+<div id="demo-banner">&#9673; UI Preview Mode — Mock Data &middot; 所有数据均为演示数据</div>
+
+<div id="main-page" class="page active">
+
+  <nav id="sidebar">
+    <div class="brand">ScreenPlan</div>
+    <div class="user-info">
+      <span id="user-name">Demo User</span>
+      <span id="user-email" class="muted">demo@screenplan.local</span>
+    </div>
+    <div class="nav-links">
+      <a href="#dashboard" class="nav-link active" data-page="dashboard"><span class="nav-icon">&#9673;</span> 仪表盘</a>
+      <a href="#timeline" class="nav-link" data-page="timeline"><span class="nav-icon">&#9716;</span> 时间线</a>
+      <a href="#devices" class="nav-link" data-page="devices"><span class="nav-icon">&#9776;</span> 设备管理</a>
+      <a href="#schedule" class="nav-link" data-page="schedule"><span class="nav-icon">&#9779;</span> 日程建议</a>
+      <a href="#friends" class="nav-link" data-page="friends"><span class="nav-icon">&#9787;</span> 好友</a>
+    </div>
+    <div class="sidebar-footer">
+      <button id="logout-btn" onclick="alert('Demo mode — no real logout.')">退出登录</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <section id="page-dashboard" class="content active">
+      <h2>今日概览</h2>
+      <div id="dashboard-summary" class="summary-cards"></div>
+      <div id="dashboard-devices" class="device-cards"></div>
+    </section>
+
+    <section id="page-timeline" class="content">
+      <h2>设备时间线</h2>
+      <div class="timeline-header">
+        <div class="date-picker">
+          <button class="nav-day" id="date-prev" title="前一天">&lsaquo;</button>
+          <input type="date" id="timeline-date">
+          <button class="nav-day" id="date-next" title="后一天">&rsaquo;</button>
+        </div>
+        <button id="timeline-refresh">刷新</button>
+      </div>
+      <div id="timeline-summary" class="timeline-summary"></div>
+      <div id="timeline-chart-wrap"></div>
+      <div class="legend">
+        <span class="dot learning"></span> 学习
+        <span class="dot entertainment"></span> 娱乐
+        <span class="dot other"></span> 其他
+      </div>
+    </section>
+
+    <section id="page-devices" class="content">
+      <h2>设备管理</h2>
+      <div class="device-register-form">
+        <input type="text" id="new-device-name" placeholder="设备名称" maxlength="64">
+        <select id="new-device-platform">
+          <option value="windows">Windows</option>
+          <option value="macos">macOS</option>
+          <option value="ios">iOS</option>
+          <option value="android">Android</option>
+          <option value="linux">Linux</option>
+        </select>
+        <button id="register-device-btn">注册设备</button>
+      </div>
+      <div id="device-list"></div>
+    </section>
+
+    <section id="page-schedule" class="content">
+      <h2>AI 日程建议</h2>
+      <div class="schedule-actions">
+        <button id="generate-schedule-btn">生成今日计划</button>
+        <button id="view-friend-schedule-btn" style="display:none">查看好友计划</button>
+      </div>
+      <div id="schedule-content" class="markdown-body"></div>
+    </section>
+
+    <section id="page-friends" class="content">
+      <h2>好友</h2>
+      <div class="friend-actions">
+        <input type="email" id="friend-email" placeholder="输入好友邮箱地址">
+        <button id="send-friend-request">添加好友</button>
+      </div>
+      <h3>收到的请求</h3>
+      <div id="received-requests"></div>
+      <h3>已发送的请求</h3>
+      <div id="sent-requests"></div>
+      <h3>好友列表</h3>
+      <div id="friends-list"></div>
+    </section>
+
+  </main>
+</div>
+
+<div id="timeline-tooltip" class="timeline-tooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// ScreenPlan Demo — Mock API + Full SPA
+// ═══════════════════════════════════════════════════════
+
+const API = '/api'; // not actually used — all calls mocked
+let AUTH = { token: 'demo-token', userId: 1, displayName: 'Demo User', email: 'demo@screenplan.local' };
+
+// ─── Helpers ───
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+function fmtTime(iso) { const d = new Date(iso); return d.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' }); }
+function fmtDate(iso) { return iso?.split('T')[0] || ''; }
+function fmtMinutes(m) { return m >= 60 ? `${(m/60).toFixed(1)}h` : `${m}min`; }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+const PLATFORM_ICONS = { macos: '&#9000;', windows: '&#9634;', ios: '&#9743;', android: '&#128241;', linux: '&#128187;' };
+
+// ─── Mock API ───
+const MOCK_DELAY = 150;
+
+let _mockDeviceIdCounter = 4;
+const _mockDevices = [
+  { id: 1, name: 'MacBook Pro', platform: 'macos', registered_at: '2026-04-15T10:30:00' },
+  { id: 2, name: 'Windows PC', platform: 'windows', registered_at: '2026-04-20T14:00:00' },
+  { id: 3, name: 'iPhone 15', platform: 'ios', registered_at: '2026-05-01T09:00:00' },
+];
+
+// Generate mock timeline events for a given date
+function _genTimelineEvents(date, deviceId, deviceName, platform) {
+  const events = [];
+  const pad = n => String(n).padStart(2, '0');
+  const ts = (h, m) => `${date}T${pad(h)}:${pad(m)}:00`;
+
+  // Define blocks: [startHour, startMin, endHour, endMin, app, category]
+  let blocks;
+  if (deviceId === 1) {
+    blocks = [
+      [7, 0, 7, 30, 'Chrome', 'other'], [7, 30, 8, 0, '微信', 'other'],
+      [8, 0, 10, 0, 'VS Code', 'learning'], [10, 0, 10, 30, 'Terminal', 'learning'],
+      [10, 30, 12, 0, 'VS Code', 'learning'], [12, 0, 13, 0, 'B站', 'entertainment'],
+      [13, 0, 15, 0, 'VS Code', 'learning'], [15, 0, 15, 30, 'Chrome', 'other'],
+      [15, 30, 17, 0, 'VS Code', 'learning'], [17, 0, 18, 0, '微信', 'other'],
+      [18, 0, 19, 0, 'B站', 'entertainment'], [19, 0, 20, 30, 'VS Code', 'learning'],
+      [20, 30, 22, 0, 'Chrome', 'other'], [22, 0, 23, 0, '微信', 'other'],
+    ];
+  } else if (deviceId === 2) {
+    blocks = [
+      [9, 0, 10, 0, 'Edge', 'other'], [10, 0, 11, 0, 'VS Code', 'learning'],
+      [11, 0, 12, 0, '微信', 'other'], [12, 0, 14, 0, 'B站', 'entertainment'],
+      [14, 0, 15, 0, 'VS Code', 'learning'], [15, 0, 17, 0, 'Steam', 'entertainment'],
+      [17, 0, 18, 0, 'Edge', 'other'], [18, 0, 20, 0, 'B站', 'entertainment'],
+      [20, 0, 21, 30, 'Steam', 'entertainment'], [21, 30, 22, 0, 'B站', 'entertainment'],
+    ];
+  } else {
+    blocks = [
+      [8, 0, 8, 30, '微信', 'other'], [12, 0, 12, 30, 'B站', 'entertainment'],
+      [13, 0, 13, 30, '微信', 'other'], [18, 0, 19, 0, '微信', 'other'],
+      [21, 0, 22, 0, 'B站', 'entertainment'],
+    ];
+  }
+
+  let eid = deviceId * 10000;
+  for (const [sh, sm, eh, em, app, cat] of blocks) {
+    let h = sh, m = sm;
+    while (h < eh || (h === eh && m < em)) {
+      events.push({
+        id: eid++, device_id: deviceId, timestamp: ts(h, m), app_name: app, category: cat
+      });
+      m += 3;
+      if (m >= 60) { h++; m -= 60; }
+    }
+  }
+  return events;
+}
+
+function _getTimelineData(date) {
+  const today = new Date().toISOString().split('T')[0];
+  if (date !== today) return { user_id: 1, date, devices: [] };
+  return {
+    user_id: 1,
+    date,
+    devices: _mockDevices.map(d => ({
+      device_id: d.id,
+      device_name: d.name,
+      platform: d.platform,
+      event_count: 0,
+      events: _genTimelineEvents(date, d.id, d.name, d.platform)
+    })).map(d => { d.event_count = d.events.length; return d; })
+  };
+}
+
+function _getMockSummary() {
+  return {
+    total_minutes_all_devices: 510,
+    overlap_minutes: 38,
+    devices: [
+      {
+        device_id: 1, device_name: 'MacBook Pro', platform: 'macos',
+        total_minutes: 320, learning_pct: 68, entertainment_pct: 15, other_pct: 17,
+        longest_focus_minutes: 85,
+        top_apps: [
+          { app_name: 'VS Code', total_minutes: 155 },
+          { app_name: 'Chrome', total_minutes: 52 },
+          { app_name: 'Terminal', total_minutes: 35 },
+          { app_name: '微信', total_minutes: 40 },
+          { app_name: 'B站', total_minutes: 38 },
+        ]
+      },
+      {
+        device_id: 2, device_name: 'Windows PC', platform: 'windows',
+        total_minutes: 190, learning_pct: 28, entertainment_pct: 55, other_pct: 17,
+        longest_focus_minutes: 42,
+        top_apps: [
+          { app_name: 'B站', total_minutes: 65 },
+          { app_name: 'Steam', total_minutes: 42 },
+          { app_name: 'VS Code', total_minutes: 35 },
+          { app_name: 'Edge', total_minutes: 28 },
+          { app_name: '微信', total_minutes: 20 },
+        ]
+      }
+    ]
+  };
+}
+
+function _getMockSchedule() {
+  return {
+    plan_markdown: `## 今日学习计划
+
+### 上午 (08:00 — 12:00)
+
+- [ ] React 组件重构 · 完成 Dashboard 模块 (2h)
+- [ ] 阅读技术文档 · API 设计规范 (45min)
+- [ ] Code Review · 前端 PR #42 (30min)
+
+### 下午 (13:00 — 18:00)
+
+- [ ] 新功能开发 · 用户权限系统 (2.5h)
+- [ ] 单元测试编写 (1h)
+- [ ] 团队周会 (30min)
+
+### 晚间 (19:00 — 22:00)
+
+- [ ] 算法练习 · LeetCode 3 题 (1h)
+- [ ] 阅读《重构：改善既有代码的设计》 (45min)
+
+---
+
+> 今日屏幕时间预估 6.5h，建议在 22:30 前结束。
+> 当前学习占比 62%，继续保持！`
+  };
+}
+
+function _getMockGeneratedSchedule() {
+  return {
+    plan_markdown: `## 全新 AI 生成计划
+
+### 上午学习时段
+
+- [ ] 完成 React 状态管理重构 (1.5h)
+- [ ] TypeScript 高级类型学习 (45min)
+- [ ] 阅读开源项目源码 (30min)
+
+### 下午开发时段
+
+- [ ] 实现用户认证模块 (2h)
+- [ ] 数据库查询优化 (1h)
+- [ ] UI 组件单元测试 (45min)
+
+### 晚间提升时段
+
+- [ ] 系统设计面试准备 (1h)
+- [ ] 技术博客写作 (30min)
+
+---
+
+> AI 基于今日设备使用数据生成 · 生成时间 ${new Date().toLocaleTimeString('zh-CN')}`
+  };
+}
+
+function _getMockFriends() {
+  return {
+    friends: [
+      { friend_id: 10, display_name: '张三', email: 'zhang@example.com', share_usage: true, share_schedule: true },
+      { friend_id: 11, display_name: '李四', email: 'li@example.com', share_usage: false, share_schedule: true },
+      { friend_id: 12, display_name: '陈小明', email: 'chen@example.com', share_usage: true, share_schedule: false },
+    ]
+  };
+}
+
+function _getMockFriendRequests() {
+  return {
+    received: [
+      { id: 100, display_name: '王五', email: 'wang@example.com' },
+      { id: 101, display_name: '赵六', email: 'zhao@example.com' },
+    ],
+    sent: [
+      { id: 200, display_name: '刘七', email: 'liuqi@example.com' },
+    ]
+  };
+}
+
+function _getMockFriendTimeline() {
+  return {
+    user_id: 10,
+    date: new Date().toISOString().split('T')[0],
+    devices: [{
+      device_id: 10, device_name: 'ThinkPad X1', platform: 'windows',
+      event_count: 42,
+      events: _genTimelineEvents(new Date().toISOString().split('T')[0], 10, 'ThinkPad X1', 'windows')
+    }]
+  };
+}
+
+function _getMockFriendSchedule(name) {
+  return {
+    plan_markdown: `### ${name} 的计划
+
+## AI 日程建议
+
+- [ ] 数据结构复习 (1.5h)
+- [ ] 项目架构设计讨论 (1h)
+- [ ] 性能优化实践 (1h)
+- [ ] 阅读《代码整洁之道》 (45min)`
+  };
+}
+
+// Mock API router — replaces fetch()
+async function api(url, opts = {}) {
+  await new Promise(r => setTimeout(r, MOCK_DELAY + Math.random() * 200));
+
+  const method = (opts.method || 'GET').toUpperCase();
+  const body = opts.body ? JSON.parse(opts.body) : {};
+
+  // Auth endpoints
+  if (url === '/auth/login' && method === 'POST') {
+    return { access_token: 'demo-token', user_id: 1, display_name: 'Demo User' };
+  }
+  if (url === '/auth/register' && method === 'POST') {
+    return { access_token: 'demo-token', user_id: 1, display_name: body.display_name || 'Demo User' };
+  }
+
+  // Usage
+  if (url === '/usage/summary') return _getMockSummary();
+
+  if (url.startsWith('/usage/timeline/full')) {
+    const date = new URLSearchParams(url.split('?')[1]).get('date');
+    return _getTimelineData(date);
+  }
+
+  if (url === '/usage/timeline' || url.startsWith('/usage/timeline?')) {
+    const date = new URLSearchParams(url.split('?')[1]).get('date') || new Date().toISOString().split('T')[0];
+    return { events: _genTimelineEvents(date, 1, 'MacBook Pro', 'macos') };
+  }
+
+  // Devices
+  if (url === '/devices' && method === 'GET') return [..._mockDevices];
+
+  if (url === '/devices' && method === 'POST') {
+    const d = { id: _mockDeviceIdCounter++, name: body.name, platform: body.platform, registered_at: new Date().toISOString() };
+    _mockDevices.push(d);
+    return d;
+  }
+
+  if (url.startsWith('/devices/') && method === 'PUT') {
+    const id = parseInt(url.split('/')[2]);
+    const dev = _mockDevices.find(d => d.id === id);
+    if (dev) { dev.name = body.name; return dev; }
+    throw new Error('Device not found');
+  }
+
+  if (url.startsWith('/devices/') && method === 'DELETE') {
+    const id = parseInt(url.split('/')[2]);
+    const idx = _mockDevices.findIndex(d => d.id === id);
+    if (idx >= 0) { _mockDevices.splice(idx, 1); return { ok: true }; }
+    throw new Error('Device not found');
+  }
+
+  // Schedule
+  if (url === '/schedule/latest') return _getMockSchedule();
+  if (url === '/schedule/generate' && method === 'POST') return _getMockGeneratedSchedule();
+
+  // Friends
+  if (url === '/friends' && method === 'GET') return _getMockFriends();
+  if (url === '/friends/requests') return _getMockFriendRequests();
+  if (url === '/friends/request' && method === 'POST') return { ok: true };
+  if (url.startsWith('/friends/accept/') && method === 'POST') return { ok: true };
+  if (url.startsWith('/friends/deny/') && method === 'POST') return { ok: true };
+  if (url.startsWith('/friends/remove/') && method === 'DELETE') return { ok: true };
+  if (url.startsWith('/friends/share/') && method === 'PUT') return { ok: true };
+
+  // Friend sub-resources
+  if (url.match(/^\/friends\/\d+\/timeline/)) return _getMockFriendTimeline();
+  if (url.match(/^\/friends\/\d+\/schedule/)) {
+    const fid = parseInt(url.split('/')[2]);
+    const name = fid === 10 ? '张三' : '好友';
+    return _getMockFriendSchedule(name);
+  }
+
+  throw new Error('Unmocked: ' + method + ' ' + url);
+}
+
+// ═══════════════════════════════════════════════════════
+// Dashboard
+// ═══════════════════════════════════════════════════════
+
+async function loadDashboard() {
+  try {
+    const summary = await api('/usage/summary');
+    renderSummary(summary);
+    renderDeviceCards(summary);
+  } catch (e) { console.error(e); }
+}
+
+function renderSummary(s) {
+  const total = s.total_minutes_all_devices || 0;
+  const devCount = s.devices?.length || 0;
+  const overlap = s.overlap_minutes || 0;
+  let lPct = 0, ePct = 0;
+  if (s.devices?.length) {
+    const tl = s.devices.reduce((a,d) => a + d.total_minutes, 0) || 1;
+    s.devices.forEach(d => {
+      lPct += (d.learning_pct || 0) * (d.total_minutes / tl);
+      ePct += (d.entertainment_pct || 0) * (d.total_minutes / tl);
+    });
+  }
+
+  let overlapHtml = '';
+  if (overlap > 0) {
+    overlapHtml = `<div class="card">
+      <div class="label">重叠时间</div>
+      <div class="value" style="color:#2563EB">${overlap.toFixed(0)}<span>min</span></div>
+      <div class="sub">多设备同时使用</div>
+      <div class="accent-line blue-light"></div>
+    </div>`;
+  }
+
+  $('#dashboard-summary').innerHTML = `
+    <div class="card">
+      <div class="label">设备数</div>
+      <div class="value">${devCount}</div>
+      <div class="accent-line blue"></div>
+    </div>
+    <div class="card">
+      <div class="label">总使用时间</div>
+      <div class="value">${(total/60).toFixed(1)}<span> h</span></div>
+      <div class="accent-line blue"></div>
+    </div>
+    ${overlapHtml}
+    <div class="card">
+      <div class="label">学习占比</div>
+      <div class="value" style="color:#2563EB">${lPct.toFixed(0)}<span>%</span></div>
+      <div class="sub">娱乐 ${ePct.toFixed(0)}%</div>
+      <div class="accent-line blue"></div>
+    </div>
+  `;
+}
+
+function renderDeviceCards(s) {
+  $('#dashboard-devices').innerHTML = (s.devices || []).map(d => `
+    <div class="device-card">
+      <div class="device-header">
+        <span class="device-name">
+          <span>${PLATFORM_ICONS[d.platform] || '&#9673;'}</span>
+          ${escHtml(d.device_name)}
+        </span>
+        <span class="platform-badge">${d.platform}</span>
+      </div>
+      <div class="device-bar">
+        <div class="learning" style="width:${d.learning_pct||0}%"></div>
+        <div class="entertainment" style="width:${d.entertainment_pct||0}%"></div>
+        <div class="other" style="width:${d.other_pct||0}%"></div>
+      </div>
+      <div style="font-size:13px;color:#64748B;margin-bottom:8px">
+        ${d.total_minutes} 分钟 &middot; 最长专注 ${d.longest_focus_minutes}min
+      </div>
+      <div class="top-apps">${(d.top_apps||[]).slice(0,5).map(a => `
+        <div class="app-row"><span class="app-name">${escHtml(a.app_name)}</span><span>${a.total_minutes}min</span></div>
+      `).join('')}</div>
+    </div>
+  `).join('') || `
+    <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#94A3B8">
+      <div style="font-size:36px;margin-bottom:12px;opacity:0.4">&#9673;</div>
+      <div style="font-size:15px;font-weight:500">暂无设备数据</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// Timeline
+// ═══════════════════════════════════════════════════════
+
+$('#timeline-date').value = new Date().toISOString().split('T')[0];
+$('#timeline-refresh').addEventListener('click', loadTimeline);
+
+$('#date-prev').addEventListener('click', () => navigateDay(-1));
+$('#date-next').addEventListener('click', () => navigateDay(1));
+
+function navigateDay(delta) {
+  const input = $('#timeline-date');
+  const d = new Date(input.value + 'T00:00:00');
+  if (isNaN(d.getTime())) return;
+  d.setDate(d.getDate() + delta);
+  input.value = d.toISOString().split('T')[0];
+  loadTimeline();
+}
+
+async function loadTimeline() {
+  const date = $('#timeline-date').value;
+  try {
+    const data = await api('/usage/timeline/full?date=' + date);
+    renderTimeline(data, date);
+  } catch (e) {
+    $('#timeline-summary').innerHTML = '';
+    $('#timeline-chart-wrap').innerHTML = `
+      <div class="timeline-empty">
+        <div class="empty-icon">&#9888;</div>
+        <div class="empty-title">加载失败</div>
+        <div class="empty-desc">${escHtml(e.message)}</div>
+      </div>`;
+  }
+}
+
+function mergeTimelineEvents(events) {
+  if (!events || !events.length) return [];
+  const sorted = [...events].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const merged = [];
+  const MERGE_GAP_MIN = 4;
+
+  let current = {
+    start: sorted[0].timestamp, end: sorted[0].timestamp,
+    category: sorted[0].category, apps: [sorted[0].app_name]
+  };
+
+  for (let i = 1; i < sorted.length; i++) {
+    const evt = sorted[i];
+    const prevEnd = new Date(current.end);
+    const thisStart = new Date(evt.timestamp);
+    const gapMin = (thisStart - prevEnd) / 60000;
+
+    if (evt.category === current.category && gapMin <= MERGE_GAP_MIN) {
+      current.end = evt.timestamp;
+      if (!current.apps.includes(evt.app_name)) current.apps.push(evt.app_name);
+    } else {
+      merged.push(current);
+      current = {
+        start: evt.timestamp, end: evt.timestamp,
+        category: evt.category, apps: [evt.app_name]
+      };
+    }
+  }
+  merged.push(current);
+  return merged;
+}
+
+function computeDeviceStats(events) {
+  if (!events || !events.length) return { total: 0, learning: 0, entertainment: 0, other: 0, appCount: 0 };
+  const cats = { learning: 0, entertainment: 0, other: 0 };
+  const appSet = new Set();
+  events.forEach(evt => { cats[evt.category] = (cats[evt.category] || 0) + 1; appSet.add(evt.app_name); });
+  const cnt = cats.learning + cats.entertainment + cats.other;
+  return { total: cnt * 3, learning: cats.learning, entertainment: cats.entertainment, other: cats.other, appCount: appSet.size };
+}
+
+function renderTimeline(data, date) {
+  const devices = data.devices || [];
+  if (!devices.length) {
+    $('#timeline-summary').innerHTML = '';
+    $('#timeline-chart-wrap').innerHTML = `
+      <div class="timeline-empty">
+        <div class="empty-icon">&#9716;</div>
+        <div class="empty-title">当日暂无活动数据</div>
+        <div class="empty-desc">${date} — 该日期没有设备活动记录</div>
+      </div>`;
+    return;
+  }
+
+  // Summary cards
+  let summaryHtml = '';
+  for (const dev of devices) {
+    const stats = computeDeviceStats(dev.events || []);
+    const total = stats.total;
+    const cats = stats.learning + stats.entertainment + stats.other;
+    const lPct = cats > 0 ? (stats.learning * 100 / cats) : 0;
+    const ePct = cats > 0 ? (stats.entertainment * 100 / cats) : 0;
+    const oPct = cats > 0 ? (stats.other * 100 / cats) : 0;
+    const icon = PLATFORM_ICONS[dev.platform] || '&#9673;';
+
+    summaryHtml += `
+      <div class="timeline-device-card">
+        <div class="tdc-header">
+          <div class="tdc-icon">${icon}</div>
+          <div>
+            <div class="tdc-name">${escHtml(dev.device_name)}</div>
+            <div class="tdc-platform">${dev.platform}</div>
+          </div>
+        </div>
+        <div class="tdc-stats">
+          <div class="tdc-stat"><span class="tdc-stat-val">${fmtMinutes(total)}</span><span class="tdc-stat-lbl">总时长</span></div>
+          <div class="tdc-stat"><span class="tdc-stat-val">${stats.appCount}</span><span class="tdc-stat-lbl">应用数</span></div>
+          <div class="tdc-stat"><span class="tdc-stat-val">${Math.round(lPct)}%</span><span class="tdc-stat-lbl">学习占比</span></div>
+        </div>
+        <div class="tdc-bar">
+          <div class="learning" style="width:${lPct}%"></div>
+          <div class="entertainment" style="width:${ePct}%"></div>
+          <div class="other" style="width:${oPct}%"></div>
+        </div>
+      </div>`;
+  }
+  $('#timeline-summary').innerHTML = summaryHtml;
+
+  // Chart
+  const HOURS = 24;
+  let chartHtml = '';
+  chartHtml += '<div class="timeline-chart-header">';
+  chartHtml += '<div class="timeline-label">设备</div>';
+  chartHtml += '<div class="timeline-axis">';
+  for (let h = 0; h <= HOURS; h++) {
+    const pct = (h / HOURS * 100);
+    const isMajor = h % 3 === 0;
+    chartHtml += `<div class="tick ${isMajor ? 'major' : 'minor'}" style="left:${pct}%"></div>`;
+    if (isMajor) chartHtml += `<div class="tick-label" style="left:${pct}%">${String(h).padStart(2,'0')}:00</div>`;
+  }
+  chartHtml += '</div></div>';
+
+  chartHtml += '<div class="timeline-chart-body">';
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = (date === today);
+
+  for (const dev of devices) {
+    const icon = PLATFORM_ICONS[dev.platform] || '&#9673;';
+    const merged = mergeTimelineEvents(dev.events || []);
+    chartHtml += '<div class="timeline-row">';
+    chartHtml += `<div class="timeline-label"><span class="dev-icon">${icon}</span><span class="dev-name-text">${escHtml(dev.device_name)}</span></div>`;
+    chartHtml += '<div class="timeline-track">';
+
+    if (isToday) {
+      const now = new Date();
+      const nowFrac = now.getHours() + now.getMinutes() / 60;
+      chartHtml += `<div class="today-marker" style="left:${(nowFrac / HOURS * 100).toFixed(2)}%"></div>`;
+    }
+
+    for (const block of merged) {
+      const startD = new Date(block.start), endD = new Date(block.end);
+      const startFrac = startD.getHours() + startD.getMinutes() / 60;
+      const endFrac = endD.getHours() + endD.getMinutes() / 60;
+      const left = (startFrac / HOURS * 100);
+      const widthPct = Math.max(0.4, (endFrac - startFrac) / HOURS * 100);
+      const cat = block.category || 'other';
+      const label = block.apps.length <= 2 ? block.apps.join(', ') : block.apps.slice(0,2).join(', ') + ' +' + (block.apps.length - 2);
+      const detail = block.apps.join(' / ') + '\n' + fmtTime(block.start) + ' \u2014 ' + fmtTime(block.end);
+
+      chartHtml += `<div class="timeline-block ${cat}"
+        style="left:${left.toFixed(2)}%;width:${widthPct.toFixed(2)}%"
+        data-tooltip="${escHtml(detail)}"
+        onmouseenter="showTooltip(event,this)" onmouseleave="hideTooltip()">
+        <span class="block-label">${escHtml(label)}</span></div>`;
+    }
+    chartHtml += '</div></div>';
+  }
+  chartHtml += '</div>';
+  $('#timeline-chart-wrap').innerHTML = chartHtml;
+}
+
+// Tooltip
+function showTooltip(e, el) {
+  const tip = $('#timeline-tooltip');
+  tip.textContent = el.dataset.tooltip;
+  tip.classList.add('visible');
+  positionTooltip(e);
+}
+function hideTooltip() { $('#timeline-tooltip').classList.remove('visible'); }
+function positionTooltip(e) {
+  const tip = $('#timeline-tooltip');
+  const pad = 12;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  const r = tip.getBoundingClientRect();
+  if (x + r.width > window.innerWidth) x = e.clientX - r.width - pad;
+  if (y + r.height > window.innerHeight) y = e.clientY - r.height - pad;
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+document.addEventListener('mousemove', e => {
+  if ($('#timeline-tooltip').classList.contains('visible')) positionTooltip(e);
+});
+
+// ═══════════════════════════════════════════════════════
+// Navigation
+// ═══════════════════════════════════════════════════════
+
+$$('.nav-link').forEach(l => l.addEventListener('click', e => {
+  e.preventDefault();
+  $$('.nav-link').forEach(x => x.classList.remove('active'));
+  l.classList.add('active');
+  $$('.content').forEach(c => c.classList.remove('active'));
+  $(`#page-${l.dataset.page}`).classList.add('active');
+  const loaders = { dashboard: loadDashboard, timeline: loadTimeline, schedule: loadSchedule, friends: loadFriends, devices: loadDevices };
+  if (loaders[l.dataset.page]) loaders[l.dataset.page]();
+}));
+
+// ═══════════════════════════════════════════════════════
+// Schedule
+// ═══════════════════════════════════════════════════════
+
+$('#generate-schedule-btn').addEventListener('click', async () => {
+  const btn = $('#generate-schedule-btn');
+  btn.textContent = '生成中 ...';
+  btn.disabled = true;
+  try {
+    const r = await api('/schedule/generate', { method: 'POST', body: JSON.stringify({ include_calendar: false }) });
+    renderSchedule(r.plan_markdown);
+  } catch (e) {
+    $('#schedule-content').innerHTML = `<p class="error">${escHtml(e.message)}</p>`;
+  }
+  btn.textContent = '生成今日计划';
+  btn.disabled = false;
+});
+
+async function loadSchedule() {
+  try {
+    const r = await api('/schedule/latest');
+    renderSchedule(r.plan_markdown);
+  } catch (e) {
+    $('#schedule-content').innerHTML = '<p class="empty">暂无计划，点击上方按钮生成。</p>';
+  }
+  loadFriendSchedules();
+}
+
+function renderSchedule(md) {
+  if (!md) { $('#schedule-content').innerHTML = '<p class="empty">暂无计划</p>'; return; }
+  let html = md
+    .replace(/### (.*)/g, '<h3>$1</h3>')
+    .replace(/## (.*)/g, '<h2>$1</h2>')
+    .replace(/---/g, '<hr>')
+    .replace(/> (.*)/g, '<blockquote>$1</blockquote>')
+    .replace(/- \[ \] (.*)/g, '<li>&#9744; $1</li>')
+    .replace(/- (.*)/g, '<li>$1</li>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  html = '<p>' + html + '</p>';
+  $('#schedule-content').innerHTML = html;
+}
+
+async function loadFriendSchedules() {
+  try {
+    const friends = await api('/friends');
+    if (!friends.friends?.length) { $('#view-friend-schedule-btn').style.display = 'none'; return; }
+    $('#view-friend-schedule-btn').style.display = '';
+    $('#view-friend-schedule-btn').textContent = '查看好友计划';
+  } catch (e) {}
+}
+
+$('#view-friend-schedule-btn').addEventListener('click', async () => {
+  try {
+    const friends = await api('/friends');
+    const f = (friends.friends || []).find(x => x.share_schedule);
+    if (f) {
+      const r = await api(`/friends/${f.friend_id}/schedule`);
+      renderSchedule(`### ${f.display_name} 的计划\n\n` + r.plan_markdown);
+    }
+  } catch (e) { alert(e.message); }
+});
+
+// ═══════════════════════════════════════════════════════
+// Friends
+// ═══════════════════════════════════════════════════════
+
+$('#send-friend-request').addEventListener('click', async () => {
+  const email = $('#friend-email').value.trim();
+  if (!email) return;
+  try {
+    await api('/friends/request', { method: 'POST', body: JSON.stringify({ email }) });
+    alert('好友请求已发送！(Demo)');
+    $('#friend-email').value = '';
+    loadFriends();
+  } catch (e) { alert(e.message); }
+});
+
+async function loadFriends() {
+  try {
+    const [reqs, friends] = await Promise.all([api('/friends/requests'), api('/friends')]);
+
+    $('#received-requests').innerHTML = (reqs.received || []).map(r => `
+      <div class="request-card">
+        <div class="info"><span class="name">${escHtml(r.display_name)}</span><span class="email">${escHtml(r.email)}</span></div>
+        <div class="actions">
+          <button class="btn-sm btn-accept" onclick="acceptRequest(${r.id})">接受</button>
+          <button class="btn-sm btn-deny" onclick="denyRequest(${r.id})">拒绝</button>
+        </div>
+      </div>`).join('') || '<p class="muted" style="padding:16px;text-align:center">暂无待处理的请求</p>';
+
+    $('#sent-requests').innerHTML = (reqs.sent || []).map(r => `
+      <div class="request-card">
+        <div class="info"><span class="name">${escHtml(r.display_name)}</span><span class="email">${escHtml(r.email)}</span></div>
+        <span class="muted">等待回应</span>
+      </div>`).join('') || '<p class="muted" style="padding:16px;text-align:center">暂无已发送的请求</p>';
+
+    $('#friends-list').innerHTML = (friends.friends || []).map(f => `
+      <div class="friend-card">
+        <div class="info"><span class="name">${escHtml(f.display_name)}</span><span class="email">${escHtml(f.email)}</span></div>
+        <div class="share-toggles">
+          <label><input type="checkbox" ${f.share_usage?'checked':''} onchange="updateShare(${f.friend_id},{share_usage:this.checked})"> 共享使用</label>
+          <label><input type="checkbox" ${f.share_schedule?'checked':''} onchange="updateShare(${f.friend_id},{share_schedule:this.checked})"> 共享计划</label>
+        </div>
+        <div class="actions">
+          <button class="btn-sm btn-accept" onclick="viewFriendTimeline(${f.friend_id},'${escHtml(f.display_name)}')">时间线</button>
+          <button class="btn-sm btn-remove" onclick="removeFriend(${f.friend_id})">删除</button>
+        </div>
+      </div>`).join('') || '<p class="muted" style="padding:16px;text-align:center">暂无好友</p>';
+  } catch (e) { console.error(e); }
+}
+
+window.acceptRequest = async id => { await api(`/friends/accept/${id}`, { method:'POST' }); loadFriends(); };
+window.denyRequest = async id => { await api(`/friends/deny/${id}`, { method:'POST' }); loadFriends(); };
+window.removeFriend = async id => { if (confirm('确认删除该好友？')) { await api(`/friends/remove/${id}`, { method:'DELETE' }); loadFriends(); } };
+window.updateShare = async (friendId, data) => { await api(`/friends/share/${friendId}`, { method:'PUT', body: JSON.stringify(data) }); };
+
+window.viewFriendTimeline = async (friendId, name) => {
+  const date = $('#timeline-date').value || new Date().toISOString().split('T')[0];
+  try {
+    const data = await api(`/friends/${friendId}/timeline?date=${date}`);
+    data.devices = (data.devices||[]).map(d => ({...d, device_name: `[${name}] ${d.device_name}`}));
+    renderTimeline(data, date);
+    $$('.nav-link').forEach(x => x.classList.remove('active'));
+    $('[data-page="timeline"]').classList.add('active');
+    $$('.content').forEach(c => c.classList.remove('active'));
+    $('#page-timeline').classList.add('active');
+    document.querySelector('#timeline-summary')?.scrollIntoView({ behavior: 'smooth' });
+  } catch (e) { alert(e.message); }
+};
+
+// ═══════════════════════════════════════════════════════
+// Device Management
+// ═══════════════════════════════════════════════════════
+
+$('#register-device-btn').addEventListener('click', async () => {
+  const name = $('#new-device-name').value.trim();
+  const platform = $('#new-device-platform').value;
+  if (!name) return alert('请输入设备名称');
+  try {
+    await api('/devices', { method: 'POST', body: JSON.stringify({ name, platform }) });
+    $('#new-device-name').value = '';
+    loadDevices();
+  } catch (e) { alert(e.message); }
+});
+
+async function loadDevices() {
+  try {
+    const devices = await api('/devices');
+    renderDeviceList(devices);
+  } catch (e) {
+    $('#device-list').innerHTML = '<p class="muted" style="text-align:center;padding:40px">加载失败</p>';
+  }
+}
+
+function renderDeviceList(devices) {
+  if (!devices || !devices.length) {
+    $('#device-list').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:#94A3B8">
+        <div style="font-size:36px;margin-bottom:12px;opacity:0.4">&#9776;</div>
+        <div style="font-size:15px;font-weight:500">暂无注册设备</div>
+        <div style="font-size:13px;margin-top:4px">使用上方表单注册您的第一台设备</div>
+      </div>`;
+    return;
+  }
+  const esc = s => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  $('#device-list').innerHTML = devices.map(d => `
+    <div class="device-item" data-id="${d.id}">
+      <div class="device-item-info">
+        <span style="font-size:20px">${PLATFORM_ICONS[d.platform] || '&#9673;'}</span>
+        <span class="device-item-name" id="dev-name-${d.id}">${escHtml(d.name)}</span>
+        <span class="platform-badge">${d.platform}</span>
+        <span class="device-item-date">${fmtDate(d.registered_at)}</span>
+      </div>
+      <div class="device-item-actions">
+        <button class="btn-sm" onclick="editDevice(${d.id}, '${esc(d.name)}', '${d.platform}')">编辑</button>
+        <button class="btn-sm btn-remove" onclick="deleteDevice(${d.id}, '${esc(d.name)}')">删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.editDevice = async (id, oldName, platform) => {
+  const name = prompt('修改设备名称：', oldName);
+  if (!name || name === oldName) return;
+  try {
+    const r = await api(`/devices/${id}`, { method: 'PUT', body: JSON.stringify({ name }) });
+    $(`#dev-name-${id}`).textContent = r.name;
+  } catch (e) { alert(e.message); }
+};
+
+window.deleteDevice = async (id, name) => {
+  if (!confirm(`确认删除设备「${name}」？\n该设备的所有使用记录也将被删除。`)) return;
+  try {
+    await api(`/devices/${id}`, { method: 'DELETE' });
+    loadDevices();
+  } catch (e) { alert(e.message); }
+};
+
+// ═══════════════════════════════════════════════════════
+// Init — load dashboard on page open
+// ═══════════════════════════════════════════════════════
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+});
+</script>
+
+</body>
+</html>

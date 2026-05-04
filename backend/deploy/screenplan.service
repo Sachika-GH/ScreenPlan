@@ -1,0 +1,34 @@
+[Unit]
+Description=ScreenPlan Backend - AI Daily Planner
+After=network.target
+
+[Service]
+Type=simple
+User=screenplan
+Group=screenplan
+WorkingDirectory=/opt/screenplan-backend
+Environment="SCREENPLAN_DATA_DIR=/opt/screenplan-backend/data"
+Environment="SCREENPLAN_PORT=5051"
+Environment="SCREENPLAN_JWT_SECRET=10b893089a88da3d105947d660c76636bd01ce2ff6a019874190c52245e118e4"
+
+# LLM API
+Environment="DEEPSEEK_API_KEY=sk-97e8a1b0ca66499b98a755caf41924a2"
+Environment="SCREENPLAN_LLM_API_BASE=https://api.deepseek.com/v1"
+Environment="SCREENPLAN_LLM_MODEL=deepseek-chat"
+
+ExecStart=/opt/screenplan-backend/venv/bin/gunicorn -w 2 -b 0.0.0.0:5051 --access-logfile - app:app
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=screenplan
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/screenplan-backend/data /opt/screenplan-backend
+
+[Install]
+WantedBy=multi-user.target

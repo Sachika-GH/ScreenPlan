@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ScreenPlan runtime data
+macos/data/
+windows/data/
+output/
+*.db
+*.db-shm
+*.db-wal
+device_state.json
+offline_queue.json
+activity_log_*.json
+*.log
+*.err
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/*.apk
+
+# Backend
+backend/data/

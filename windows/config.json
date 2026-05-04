@@ -1,0 +1,49 @@
+{
+    "_comment": "ScreenPlan Windows Agent - Configuration",
+
+    "server": {
+        "_comment": "Backend URL. Priority: this field > SCREENPLAN_SERVER_URL env > LAN gateway auto-detect",
+        "url": "http://45.197.150.197:5051"
+    },
+
+    "paths": {
+        "data_dir": "data",
+        "output_dir": "output"
+    },
+
+    "tracker": {
+        "record_interval_minutes": 3,
+        "learning_apps": [
+            "Visual Studio Code", "VSCode", "Code",
+            "Microsoft Visual Studio", "PyCharm", "IntelliJ IDEA",
+            "Google Chrome", "Firefox", "Edge",
+            "Windows Terminal", "PowerShell",
+            "Obsidian", "Notion",
+            "Preview", "Books", "Kindle",
+            "Anki",
+            "Matlab", "RStudio", "Jupyter",
+            "Zotero", "Mendeley",
+            "Word", "Excel", "PowerPoint",
+            "Outlook"
+        ],
+        "entertainment_apps": [
+            "Netflix", "YouTube",
+            "VLC", "Spotify",
+            "Steam", "Minecraft",
+            "bilibili", "Douyin", "TikTok",
+            "WeChat", "QQ",
+            "微博", "Twitter", "X",
+            "Instagram", "Reddit",
+            "Discord", "Telegram"
+        ]
+    },
+
+    "user_profile": {
+        "name": "User",
+        "focus_ability": "中等（连续专注约25-45分钟）",
+        "peak_hours": "上午9:00-11:00，下午15:00-17:00",
+        "learning_goals": "每日投入2-4小时深度学习",
+        "workday_learning_hours": 4,
+        "weekend_learning_hours": 2
+    }
+}

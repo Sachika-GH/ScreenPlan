@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.screenplan.agent</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/sachika/Desktop/VibeCoding/screenplan-agent-macos/main.py</string>
+        <string>daemon</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/sachika/Desktop/VibeCoding/screenplan-agent-macos</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/sachika/Desktop/VibeCoding/screenplan-agent-macos/data/launchd.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/sachika/Desktop/VibeCoding/screenplan-agent-macos/data/launchd.err</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>SCREENPLAN_SERVER_URL</key>
+        <string>http://45.197.150.197:5051</string>
+    </dict>
+</dict>
+</plist>

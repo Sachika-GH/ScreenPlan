@@ -1,0 +1,95 @@
+{
+    "_comment": "ScreenPlan macOS Agent - Configuration",
+    "server": {
+        "_comment": "Backend URL. Priority: this field > SCREENPLAN_SERVER_URL env > LAN gateway auto-detect",
+        "url": "http://45.197.150.197:5051"
+    },
+    "paths": {
+        "data_dir": "data",
+        "output_dir": "output"
+    },
+    "tracker": {
+        "record_interval_minutes": 3,
+        "learning_apps": [
+            "Visual Studio Code",
+            "VSCode",
+            "Code",
+            "Xcode",
+            "PyCharm",
+            "IntelliJ IDEA",
+            "Safari",
+            "Google Chrome",
+            "Firefox",
+            "Terminal",
+            "iTerm",
+            "iTerm2",
+            "Obsidian",
+            "Notion",
+            "Bear",
+            "Preview",
+            "Books",
+            "Kindle",
+            "Anki",
+            "GoodNotes",
+            "Notability",
+            "Matlab",
+            "RStudio",
+            "Jupyter",
+            "Zotero",
+            "Mendeley",
+            "Papers"
+        ],
+        "entertainment_apps": [
+            "Netflix",
+            "YouTube",
+            "Bilibili",
+            "IINA",
+            "VLC",
+            "QuickTime Player",
+            "Steam",
+            "Minecraft",
+            "Spotify",
+            "Apple Music",
+            "bilibili",
+            "Douyin",
+            "TikTok",
+            "WeChat",
+            "QQ",
+            "\u5fae\u535a",
+            "Twitter",
+            "X",
+            "Instagram",
+            "Reddit",
+            "\u8c46\u74e3"
+        ],
+        "idle_threshold_minutes": 2
+    },
+    "url_rules": {
+        "_comment": "URL-based classification for browser tabs. Matches against domain.",
+        "entertainment_domains": [
+            "youtube.com",
+            "bilibili.com",
+            "netflix.com",
+            "douyin.com",
+            "tiktok.com",
+            "reddit.com",
+            "iqiyi.com",
+            "youku.com",
+            "twitch.tv",
+            "iina.io"
+        ]
+    },
+    "analyzer": {
+        "focus_session_min_minutes": 25,
+        "max_switch_gap_minutes": 3
+    },
+    "user_profile": {
+        "name": "User",
+        "focus_ability": "\u4e2d\u7b49\uff08\u8fde\u7eed\u4e13\u6ce8\u7ea625-45\u5206\u949f\uff09",
+        "peak_hours": "\u4e0a\u53489:00-11:00\uff0c\u4e0b\u534815:00-17:00",
+        "learning_goals": "\u6bcf\u65e5\u6295\u51652-4\u5c0f\u65f6\u6df1\u5ea6\u5b66\u4e60\uff0c\u5b8c\u6210\u8bfe\u7a0b\u4efb\u52a1\uff0c\u9605\u8bfb\u6280\u672f\u6587\u6863",
+        "avoid_overplanning": true,
+        "workday_learning_hours": 4,
+        "weekend_learning_hours": 2
+    }
+}
