@@ -256,6 +256,22 @@ function mergeTimelineEvents(events) {
   return merged;
 }
 
+// Per-app color palette for unique identification
+const APP_COLORS = [
+  '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#22C55E',
+  '#06B6D4', '#EF4444', '#F97316', '#14B8A6', '#6366F1',
+  '#84CC16', '#0EA5E9', '#D946EF', '#EAB308', '#10B981'
+];
+
+function getAppColor(appName, index) {
+  let hash = 0;
+  for (let i = 0; i < appName.length; i++) {
+    hash = ((hash << 5) - hash) + appName.charCodeAt(i);
+    hash |= 0;
+  }
+  return APP_COLORS[Math.abs(hash) % APP_COLORS.length];
+}
+
 function computeDeviceStats(events) {
   if (!events || !events.length) return { total: 0, learning: 0, entertainment: 0, other: 0, appCount: 0 };
   const cats = { learning: 0, entertainment: 0, other: 0 };
@@ -285,8 +301,12 @@ function computeDeviceStats(events) {
 }
 
 function renderTimeline(data, date) {
-  // Summary cards
   const devices = data.devices || [];
+
+  // Show/hide legend
+  const legend = $('#timeline-legend');
+  legend.style.display = devices.length ? 'flex' : 'none';
+
   if (!devices.length) {
     $('#timeline-summary').innerHTML = '';
     $('#timeline-chart-wrap').innerHTML = `
@@ -387,20 +407,28 @@ function renderTimeline(data, date) {
       const startFrac = startD.getHours() + startD.getMinutes() / 60;
       const endFrac = endD.getHours() + endD.getMinutes() / 60;
       const left = (startFrac / HOURS * 100);
-      const widthPct = Math.max(0.4, (endFrac - startFrac) / HOURS * 100);
+      const widthPct = Math.max(0.5, (endFrac - startFrac) / HOURS * 100);
       const cat = block.category || 'other';
 
       const label = block.apps.length <= 2
         ? block.apps.join(', ')
         : block.apps.slice(0,2).join(', ') + ' +' + (block.apps.length - 2);
 
-      const detail = block.apps.join(' / ') + '\n' +
-        fmtTime(block.start) + ' — ' + fmtTime(block.end);
+      const appList = block.apps.join(' / ');
+      const timeRange = fmtTime(block.start) + ' — ' + fmtTime(block.end);
+      const duration = Math.round((endD - startD) / 60000);
+      const durText = duration > 0 ? ` (${duration}min)` : '';
+      const catLabel = cat === 'learning' ? '学习' : cat === 'entertainment' ? '娱乐' : '其他';
+
+      const detail = `<span class="tip-title">${escHtml(appList)}</span>
+${catLabel}${durText}
+<span class="tip-time">${timeRange}</span>`;
 
       chartHtml += `<div class="timeline-block ${cat}"
         style="left:${left.toFixed(2)}%;width:${widthPct.toFixed(2)}%"
         data-tooltip="${escHtml(detail)}"
         onmouseenter="showTooltip(event,this)" onmouseleave="hideTooltip()">
+        <span class="block-dot"></span>
         <span class="block-label">${escHtml(label)}</span>
       </div>`;
     }
@@ -415,7 +443,7 @@ function renderTimeline(data, date) {
 // Tooltip
 function showTooltip(e, el) {
   const tip = $('#timeline-tooltip');
-  tip.textContent = el.dataset.tooltip;
+  tip.innerHTML = el.dataset.tooltip;
   tip.classList.add('visible');
   positionTooltip(e);
 }
