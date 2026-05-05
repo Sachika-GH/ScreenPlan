@@ -184,14 +184,6 @@ def user_usage(user_id):
             union_total = RECORD_INTERVAL_MIN
 
         # Compute sum of all device totals for overlap calculation
-        devices_total = sum(
-            sum(v["duration_minutes"] for v in app_map.values())
-            for dev in devices
-            for app_map_raw in [
-                defaultdict(lambda: {"duration_minutes": 0.0})
-            ]
-        )
-        # Simpler: compute from device_summaries already built above
         sum_total = sum(ds["total_minutes"] for ds in device_summaries)
         overlap = round(max(sum_total - union_total, 0.0), 1)
 
