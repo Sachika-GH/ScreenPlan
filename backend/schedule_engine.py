@@ -9,7 +9,12 @@ SYSTEM_PROMPT = """你是一位专业的屏幕时间行为分析师。你的任�
 
 1. **屏幕时间与健康**：根据用户首次开始使用设备和最后一次使用设备的时间，推断大致的清醒/睡眠窗口。关注总屏幕时长是否合理。
 
-2. **学习-娱乐平衡**：分析各设备的学习/娱乐/其他时间占比。识别是否存在"过度娱乐"或"伪学习"（切换频繁但专注度低）的情况。
+2. **应用性质判定**：传入数据中的分类标签（learning/entertainment/other）来自客户端的自动分类，**可能存在错误**。你必须根据应用名称的常识认知，独立判断每个 App 的实际性质。例如：
+   - "不背单词"是语言学习工具，应归为学习类
+   - "哔哩哔哩"可能是学习（教程）也可能是娱乐，需结合使用时长和上下文判断
+   - "VS Code""Xcode"是开发工具，归为学习/工作类
+   - "微信"偏向通讯工具，"Safari"是浏览器，归为工具/其他类
+   你需要在输出中给出你自己的分类判断。
 
 3. **多设备使用模式**：
    - 是否存在多设备同时使用的重叠时段（可能分散注意力）
@@ -33,7 +38,23 @@ SYSTEM_PROMPT = """你是一位专业的屏幕时间行为分析师。你的任�
 ---
 
 ### 📊 屏幕时间概览
-> 用 1-2 句话概述昨日的屏幕使用总览（总时长、主要设备、学习/娱乐比例），不超过 100 字。
+> 用 1-2 句话概述昨日的屏幕使用总览（总时长、主要设备、你自己判定的学习/娱乐比例），不超过 100 字。
+
+---
+
+### 🏷️ 应用分类（AI 判定）
+根据应用名称的常识认知，对所有出现过的应用进行分类。如果你不确定某个应用的类别，标注为"待确认"并给出你的猜测。
+
+格式：
+```
+**学习类**：不背单词 90min、VS Code 120min、Xcode 60min ...
+
+**娱乐类**：哔哩哔哩 45min、Steam 30min、抖音 20min ...
+
+**工具/其他**：微信 30min、Safari 60min、Finder 15min ...
+```
+
+基于你的自主分类，计算并给出学习/娱乐/工具的总时间及占比。
 
 ---
 
@@ -119,7 +140,11 @@ def compute_union_duration(timestamps: list, interval_minutes: float) -> tuple:
 
 
 def build_usage_context(devices: list[dict], union_total: float = None) -> str:
-    """Build a text summary of multi-device usage data for the prompt."""
+    """Build a text summary of multi-device usage data for the prompt.
+    
+    Important: Does NOT include client-side category labels (learning/entertainment/other).
+    The LLM is expected to classify apps independently based on name alone.
+    """
     if not devices:
         return "（暂无使用数据）"
 
@@ -134,14 +159,11 @@ def build_usage_context(devices: list[dict], union_total: float = None) -> str:
     for d in devices:
         lines.append(f"\n### {d['device_name']} ({d['platform']})")
         lines.append(f"- 使用时长: {d['total_minutes']} 分钟")
-        lines.append(f"- 学习占比: {d['learning_pct']}%")
-        lines.append(f"- 娱乐占比: {d['entertainment_pct']}%")
-        lines.append(f"- 其他占比: {d['other_pct']}%")
 
         if d.get("top_apps"):
-            lines.append("- 最常用应用:")
+            lines.append("- 最常用应用及使用时长:")
             for app in d["top_apps"][:5]:
-                lines.append(f"  * {app['app_name']}: {app['total_minutes']}分钟 ({app['category']})")
+                lines.append(f"  * {app['app_name']}: {app['total_minutes']}分钟")
 
     return "\n".join(lines)
 
@@ -149,16 +171,17 @@ def build_usage_context(devices: list[dict], union_total: float = None) -> str:
 def build_multi_day_usage_context(multi_day_data: dict) -> str:
     """Build a comprehensive usage summary across multiple days.
     multi_day_data: {date_iso: (devices_list, union_total)} for each day.
+    
+    Important: Does NOT include client-side category labels. The LLM is expected
+    to classify apps independently based on name alone.
     """
     if not multi_day_data:
         return "（暂无使用数据）"
 
     lines = ["## 近期多设备使用数据"]
 
-    # Sort by date
     sorted_dates = sorted(multi_day_data.keys())
 
-    # Per-day overview
     for i, day in enumerate(sorted_dates):
         devices, union_total = multi_day_data[day]
         if not devices:
@@ -172,7 +195,7 @@ def build_multi_day_usage_context(multi_day_data: dict) -> str:
         lines.append(f"- 总使用时间: {total_all} 分钟 ({round(total_all/60, 1)} 小时)")
         lines.append(f"- 活跃设备: {len(devices)} 台")
         for d in devices:
-            lines.append(f"  * {d['device_name']} ({d['platform']}): {d['total_minutes']}分钟, 学习 {d['learning_pct']}%, 娱乐 {d['entertainment_pct']}%")
+            lines.append(f"  * {d['device_name']} ({d['platform']}): {d['total_minutes']}分钟")
 
     # Most recent day's detailed apps
     if sorted_dates:
@@ -183,11 +206,10 @@ def build_multi_day_usage_context(multi_day_data: dict) -> str:
             for d in latest_devices:
                 lines.append(f"\n**{d['device_name']}** ({d['platform']})")
                 lines.append(f"- 使用时长: {d['total_minutes']} 分钟")
-                lines.append(f"- 学习 {d['learning_pct']}% | 娱乐 {d['entertainment_pct']}% | 其他 {d['other_pct']}%")
                 if d.get("top_apps"):
-                    lines.append("- 最常用应用:")
+                    lines.append("- 最常用应用及使用时长:")
                     for app in d["top_apps"][:5]:
-                        lines.append(f"  * {app['app_name']}: {app['total_minutes']}分钟 ({app['category']})")
+                        lines.append(f"  * {app['app_name']}: {app['total_minutes']}分钟")
 
     return "\n".join(lines)
 
@@ -211,7 +233,7 @@ def build_user_prompt(
 ## 分析要求
 - 今天类型：{day_type}
 - 请**不要**规划用户的今日日程——你没有用户的日历和工作安排信息。
-- 你的任务是分析昨日的屏幕使用数据，发现行为模式，并给出改善建议。
+- 传入数据中的分类标签来自客户端自动匹配，**可能不准确**。你必须根据应用名称的常识认知，自主判定每个 App 的性质（学习/娱乐/工具），并在输出中给出你自己的分类和占比计算。
 - 如果数据不足（如数据量很少），请如实说明，不要编造结论。
 
 请根据以上信息，生成本次屏幕时间行为分析报告。"""
