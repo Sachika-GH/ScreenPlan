@@ -16,6 +16,8 @@ DATABASE_PATH = DATA_DIR / "screenplan.db"
 
 # LLM config
 LLM_API_KEY = os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY", "")
+# 注意：推荐每个用户在 Web UI 中配置自己的 API Key，而非使用服务端全局 Key
+# 全局 Key 仅作为兜底，留空则强制用户自行配置
 LLM_API_BASE = os.environ.get("SCREENPLAN_LLM_API_BASE", "https://api.deepseek.com/v1")
 LLM_MODEL = os.environ.get("SCREENPLAN_LLM_MODEL", "deepseek-chat")
 LLM_MAX_TOKENS = int(os.environ.get("SCREENPLAN_LLM_MAX_TOKENS", "4096"))

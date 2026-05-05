@@ -14,16 +14,20 @@ from config import (
 )
 
 
-def generate_plan(system_prompt: str, user_prompt: str) -> Optional[str]:
-    """Call the LLM API and return the generated plan text."""
-    if not LLM_API_KEY:
+def generate_plan(system_prompt: str, user_prompt: str, api_key: Optional[str] = None) -> Optional[str]:
+    """Call the LLM API and return the generated plan text.
+
+    api_key: Per-user API key. Falls back to server-level env var if not provided.
+    """
+    key = api_key or LLM_API_KEY
+    if not key:
         print("[llm_client] ERROR: No API key configured", file=sys.stderr)
         return None
 
     url = f"{LLM_API_BASE.rstrip('/')}/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {LLM_API_KEY}",
+        "Authorization": f"Bearer {key}",
     }
     payload = {
         "model": LLM_MODEL,

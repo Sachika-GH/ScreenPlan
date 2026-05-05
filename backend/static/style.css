@@ -1466,6 +1466,100 @@ button:active {
   font-style: italic;
 }
 
+/* ─── Schedule - API Key ──────────────────────────────── */
+
+.api-key-section {
+  background: linear-gradient(135deg, var(--brand-50), #f0f4ff);
+  border: 1.5px solid var(--brand-200);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  max-width: 520px;
+}
+
+.api-key-hint {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+
+.api-key-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.api-key-input-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s var(--ease);
+}
+
+.api-key-input-row input:focus {
+  border-color: var(--brand-500);
+}
+
+.api-key-input-row input::placeholder {
+  color: var(--text-tertiary);
+  font-family: 'Inter', sans-serif;
+}
+
+.api-key-note {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 10px 0 0;
+}
+
+.api-key-note a {
+  color: var(--brand-600);
+  text-decoration: underline;
+}
+
+.api-key-note a:hover {
+  color: var(--brand-800);
+}
+
+.api-key-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--accent-green);
+  border-left: 4px solid var(--accent-green);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  max-width: 520px;
+  font-size: 13px;
+  color: var(--accent-green);
+  font-weight: 500;
+}
+
+#remove-api-key-btn {
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+
+#remove-api-key-btn:hover {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+  background: rgba(220, 38, 38, 0.03);
+}
+
 /* ─── Friends ─────────────────────────────────────────── */
 
 .friend-actions {

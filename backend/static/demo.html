@@ -1133,7 +1133,7 @@ button:active { transform: scale(0.97); }
       <a href="#dashboard" class="nav-link active" data-page="dashboard"><span class="nav-icon">&#9673;</span> 仪表盘</a>
       <a href="#timeline" class="nav-link" data-page="timeline"><span class="nav-icon">&#9716;</span> 时间线</a>
       <a href="#devices" class="nav-link" data-page="devices"><span class="nav-icon">&#9776;</span> 设备管理</a>
-      <a href="#schedule" class="nav-link" data-page="schedule"><span class="nav-icon">&#9779;</span> 日程建议</a>
+      <a href="#schedule" class="nav-link" data-page="schedule"><span class="nav-icon">&#9779;</span> 行为分析</a>
       <a href="#friends" class="nav-link" data-page="friends"><span class="nav-icon">&#9787;</span> 好友</a>
     </div>
     <div class="sidebar-footer">
@@ -1185,10 +1185,22 @@ button:active { transform: scale(0.97); }
     </section>
 
     <section id="page-schedule" class="content">
-      <h2>AI 日程建议</h2>
-      <div class="schedule-actions">
-        <button id="generate-schedule-btn">生成今日计划</button>
-        <button id="view-friend-schedule-btn" style="display:none">查看好友计划</button>
+      <h2>AI 行为分析</h2>
+      <div id="schedule-api-key-section" class="api-key-section" style="display:none">
+        <p class="api-key-hint">使用 AI 行为分析前，请先配置您的 DeepSeek API Key。</p>
+        <div class="api-key-input-row">
+          <input type="password" id="api-key-input" placeholder="sk-..." maxlength="256">
+          <button id="save-api-key-btn" class="btn-primary">保存</button>
+        </div>
+        <p class="api-key-note">没有 API Key？<a href="https://platform.deepseek.com/api_keys" target="_blank">前往 DeepSeek 获取</a></p>
+      </div>
+      <div id="schedule-api-key-status" class="api-key-status" style="display:none">
+        <span>&#10003; API Key 已配置</span>
+        <button id="remove-api-key-btn">移除</button>
+      </div>
+      <div id="schedule-actions" class="schedule-actions" style="display:none">
+        <button id="generate-schedule-btn">生成行为分析</button>
+        <button id="view-friend-schedule-btn" style="display:none">查看好友报告</button>
       </div>
       <div id="schedule-content" class="markdown-body"></div>
     </section>
@@ -1338,56 +1350,75 @@ function _getMockSummary() {
 
 function _getMockSchedule() {
   return {
-    plan_markdown: `## 今日学习计划
-
-### 上午 (08:00 — 12:00)
-
-- [ ] React 组件重构 · 完成 Dashboard 模块 (2h)
-- [ ] 阅读技术文档 · API 设计规范 (45min)
-- [ ] Code Review · 前端 PR #42 (30min)
-
-### 下午 (13:00 — 18:00)
-
-- [ ] 新功能开发 · 用户权限系统 (2.5h)
-- [ ] 单元测试编写 (1h)
-- [ ] 团队周会 (30min)
-
-### 晚间 (19:00 — 22:00)
-
-- [ ] 算法练习 · LeetCode 3 题 (1h)
-- [ ] 阅读《重构：改善既有代码的设计》 (45min)
+    plan_markdown: `### 📊 屏幕时间概览
+> 昨日你使用了 MacBook Pro 和 Windows PC 两台设备，总屏幕时间约 6.5 小时，其中学习占比 62%，娱乐占比 18%。
 
 ---
 
-> 今日屏幕时间预估 6.5h，建议在 22:30 前结束。
-> 当前学习占比 62%，继续保持！`
+### 🔍 行为模式分析
+
+**多设备高效协作：** MacBook 主要用于学习和代码，Windows PC 用于浏览和技术文档查阅，两台设备分工明确，未见明显的多设备同时使用导致注意力分散的情况。
+
+**下午效率高峰：** 数据显示你在 14:00-17:00 期间学习专注度最高，连续专注时段最长可达 90 分钟。这是你的"黄金学习窗口"。
+
+**晚间娱乐时间合理：** 19:00 后娱乐时间有所增加，但总量控制在 1 小时内，属于正常放松范围。
+
+---
+
+### 😴 睡眠与休息推测
+
+根据设备活动记录，昨日首次活跃时间为 07:45，最后一次为 23:10。推测清醒窗口约 07:30-23:30（约 16 小时），睡眠窗口约 23:30-07:30（约 8 小时）。睡眠时长良好。
+
+---
+
+### 💡 改善建议
+
+- **利用黄金窗口**：将最具挑战性的学习任务安排在下午 14:00-17:00，这段时间你的专注度明显更高。
+- **减少上午的碎片化学时**：上午 09:00-11:00 期间应用切换较频繁（VSCode → Chrome → 微信），建议尝试关闭通知进行 1 小时深度工作。
+- **增加户外休息**：连续屏幕使用时间较长，建议每 2 小时安排 5-10 分钟的远离屏幕休息。
+
+---
+
+### ⚠️ 值得关注
+
+- 11:30-12:00 出现了 MacBook 和 iPhone 同时使用的情况（学习+娱乐并行），这可能降低了上午的学习效率。建议学习时段将手机放在视线之外。`
   };
 }
 
 function _getMockGeneratedSchedule() {
   return {
-    plan_markdown: `## 全新 AI 生成计划
-
-### 上午学习时段
-
-- [ ] 完成 React 状态管理重构 (1.5h)
-- [ ] TypeScript 高级类型学习 (45min)
-- [ ] 阅读开源项目源码 (30min)
-
-### 下午开发时段
-
-- [ ] 实现用户认证模块 (2h)
-- [ ] 数据库查询优化 (1h)
-- [ ] UI 组件单元测试 (45min)
-
-### 晚间提升时段
-
-- [ ] 系统设计面试准备 (1h)
-- [ ] 技术博客写作 (30min)
+    plan_markdown: `### 📊 屏幕时间概览
+> AI 基于你近 3 天的设备使用数据生成。昨日总屏幕时间约 7.2 小时，学习占比 58%，较前日有所下降。
 
 ---
 
-> AI 基于今日设备使用数据生成 · 生成时间 ${new Date().toLocaleTimeString('zh-CN')}`
+### 🔍 行为模式分析
+
+**学习时间呈下降趋势：** 对比近 3 天数据，你的学习时间从 4.5h → 4.2h → 3.8h 逐步下降，而娱乐时间从 0.8h → 1.2h → 1.5h 逐步上升。需警惕这种"滑坡效应"。
+
+**深夜使用增加：** 最近两天的最后一次设备活动时间从 22:30 推迟到了 23:45，熬夜趋势值得注意。
+
+**多设备切换频率增高：** 昨日 MacBook 与 Windows PC 的交叉使用频率比前日增加了约 30%，可能反映了任务切换过多的问题。
+
+---
+
+### 😴 睡眠与休息推测
+
+近 3 天睡眠窗口推测分别为 23:00-07:30（8.5h）、23:30-07:15（7.75h）、23:45-07:00（7.25h）。睡眠时长的下降趋势需要警惕。
+
+---
+
+### 💡 改善建议
+
+- **设定晚间屏幕宵禁**：建议在 23:00 前停止使用所有设备，帮助恢复规律作息。
+- **娱乐时间设置硬上限**：目前的娱乐时间增长趋势如果持续，下周可能超过 2h/天。可以尝试在设备上设置每日娱乐时长限制。
+- **找回专注节奏**：尝试番茄工作法（25 分钟专注 + 5 分钟休息），减少应用切换，提升实际学习产出。
+
+---
+
+### ⚠️ 值得关注
+
+- 3 天内学习时间下降 16%，而娱乐时间上升 87%，这是非常值得关注的趋势。建议尽早调整，避免形成新的不良习惯。`
   };
 }
 
@@ -1427,14 +1458,33 @@ function _getMockFriendTimeline() {
 
 function _getMockFriendSchedule(name) {
   return {
-    plan_markdown: `### ${name} 的计划
+    plan_markdown: `### ${name} 的屏幕时间分析
 
-## AI 日程建议
+---
 
-- [ ] 数据结构复习 (1.5h)
-- [ ] 项目架构设计讨论 (1h)
-- [ ] 性能优化实践 (1h)
-- [ ] 阅读《代码整洁之道》 (45min)`
+### 📊 屏幕时间概览
+> ${name} 昨日使用 1 台设备，总屏幕时间约 5.2 小时，学习占比 71%。
+
+---
+
+### 🔍 行为模式分析
+
+**高度专注型用户：** ${name} 的学习占比持续在 70% 以上，娱乐时间很少，是典型的高效学习型用户。
+
+**单设备为主：** 主要使用一台设备，没有多设备切换的问题，专注度很高。
+
+---
+
+### 😴 睡眠与休息推测
+
+根据活动记录，清醒窗口约 08:00-23:00（15 小时）。如果睡眠在 23:00-08:00，则睡眠时长充足。
+
+---
+
+### 💡 改善建议
+
+- **保持当前节奏**：学习效率很高，继续坚持。
+- **适当增加运动**：长时间高强度学习后，建议增加户外活动时间。`
   };
 }
 
@@ -1492,6 +1542,11 @@ async function api(url, opts = {}) {
   // Schedule
   if (url === '/schedule/latest') return _getMockSchedule();
   if (url === '/schedule/generate' && method === 'POST') return _getMockGeneratedSchedule();
+
+  // User API Key
+  if (url === '/user/llm-key/status') return { configured: true };
+  if (url === '/user/llm-key' && method === 'PUT') return { ok: true };
+  if (url === '/user/llm-key' && method === 'DELETE') return { ok: true };
 
   // Friends
   if (url === '/friends' && method === 'GET') return _getMockFriends();
@@ -1814,9 +1869,59 @@ $$('.nav-link').forEach(l => l.addEventListener('click', e => {
 // Schedule
 // ═══════════════════════════════════════════════════════
 
+async function loadSchedule() {
+  // In demo mode, always show configured
+  showApiKeyConfigured();
+
+  try {
+    const r = await api('/schedule/latest');
+    renderSchedule(r.plan_markdown);
+  } catch (e) {
+    $('#schedule-content').innerHTML = '<p class="empty">暂无分析报告，点击上方按钮生成。</p>';
+  }
+  loadFriendSchedules();
+}
+
+function showApiKeyMissing() {
+  $('#schedule-api-key-section').style.display = 'block';
+  $('#schedule-api-key-status').style.display = 'none';
+  $('#schedule-actions').style.display = 'none';
+}
+
+function showApiKeyConfigured() {
+  $('#schedule-api-key-section').style.display = 'none';
+  $('#schedule-api-key-status').style.display = 'flex';
+  $('#schedule-actions').style.display = 'flex';
+}
+
+$('#save-api-key-btn').addEventListener('click', async () => {
+  const key = $('#api-key-input').value.trim();
+  if (!key) {
+    alert('请输入您的 DeepSeek API Key');
+    return;
+  }
+  try {
+    await api('/user/llm-key', { method: 'PUT', body: JSON.stringify({ api_key: key }) });
+    $('#api-key-input').value = '';
+    showApiKeyConfigured();
+  } catch (e) {
+    alert('保存失败：' + e.message);
+  }
+});
+
+$('#remove-api-key-btn').addEventListener('click', async () => {
+  if (!confirm('确认移除 API Key？移除后将无法使用 AI 行为分析功能。')) return;
+  try {
+    await api('/user/llm-key', { method: 'DELETE' });
+    showApiKeyMissing();
+  } catch (e) {
+    alert('移除失败：' + e.message);
+    }
+});
+
 $('#generate-schedule-btn').addEventListener('click', async () => {
   const btn = $('#generate-schedule-btn');
-  btn.textContent = '生成中 ...';
+  btn.textContent = '分析中 ...';
   btn.disabled = true;
   try {
     const r = await api('/schedule/generate', { method: 'POST', body: JSON.stringify({ include_calendar: false }) });
@@ -1824,27 +1929,18 @@ $('#generate-schedule-btn').addEventListener('click', async () => {
   } catch (e) {
     $('#schedule-content').innerHTML = `<p class="error">${escHtml(e.message)}</p>`;
   }
-  btn.textContent = '生成今日计划';
+  btn.textContent = '生成行为分析';
   btn.disabled = false;
 });
 
-async function loadSchedule() {
-  try {
-    const r = await api('/schedule/latest');
-    renderSchedule(r.plan_markdown);
-  } catch (e) {
-    $('#schedule-content').innerHTML = '<p class="empty">暂无计划，点击上方按钮生成。</p>';
-  }
-  loadFriendSchedules();
-}
-
 function renderSchedule(md) {
-  if (!md) { $('#schedule-content').innerHTML = '<p class="empty">暂无计划</p>'; return; }
+  if (!md) { $('#schedule-content').innerHTML = '<p class="empty">暂无分析报告</p>'; return; }
   let html = md
     .replace(/### (.*)/g, '<h3>$1</h3>')
     .replace(/## (.*)/g, '<h2>$1</h2>')
     .replace(/---/g, '<hr>')
     .replace(/> (.*)/g, '<blockquote>$1</blockquote>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/- \[ \] (.*)/g, '<li>&#9744; $1</li>')
     .replace(/- (.*)/g, '<li>$1</li>')
     .replace(/\n\n/g, '</p><p>')
@@ -1858,7 +1954,7 @@ async function loadFriendSchedules() {
     const friends = await api('/friends');
     if (!friends.friends?.length) { $('#view-friend-schedule-btn').style.display = 'none'; return; }
     $('#view-friend-schedule-btn').style.display = '';
-    $('#view-friend-schedule-btn').textContent = '查看好友计划';
+    $('#view-friend-schedule-btn').textContent = '查看好友报告';
   } catch (e) {}
 }
 
@@ -1868,7 +1964,7 @@ $('#view-friend-schedule-btn').addEventListener('click', async () => {
     const f = (friends.friends || []).find(x => x.share_schedule);
     if (f) {
       const r = await api(`/friends/${f.friend_id}/schedule`);
-      renderSchedule(`### ${f.display_name} 的计划\n\n` + r.plan_markdown);
+      renderSchedule(`### ${f.display_name} 的报告\n\n` + r.plan_markdown);
     }
   } catch (e) { alert(e.message); }
 });

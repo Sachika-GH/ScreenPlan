@@ -66,10 +66,14 @@ sudo nano /etc/systemd/system/screenplan.service
 
 ```
 Environment="SCREENPLAN_JWT_SECRET=<随机64位hex>"
-Environment="DEEPSEEK_API_KEY=<你的DeepSeek API Key>"
-Environment="SCREENPLAN_LLM_API_BASE=https://api.deepseek.com/v1"
-Environment="SCREENPLAN_LLM_MODEL=deepseek-chat"
 ```
+> **LLM API Key** 不再在服务端配置。每个用户登录 Web UI 后，在「AI 行为分析」页面自行输入自己的 DeepSeek API Key。
+> 
+> 如需设置服务端全局 Key（不推荐），可添加：
+> ```
+> Environment="DEEPSEEK_API_KEY=<你的DeepSeek API Key>"
+> ```
+> 优先级：用户自配的 Key > 服务端全局 Key
 
 应用更改：
 
@@ -301,8 +305,8 @@ A: 检查 Dashboard 上的 Device 状态是否为绿。若为红，重新走一�
 **Q: 重装后数据丢失**  
 A: 不会。服务端按 `(user_id, platform)` 去重，同平台设备复用旧 ID，所有历史数据保留。
 
-**Q: AI 计划生成失败**  
-A: 确认 VPS 上已配置正确的 `DEEPSEEK_API_KEY`，且服务器可访问 DeepSeek API。
+**Q: AI 行为分析生成失败**  
+A: 请在 Web UI 的「AI 行为分析」页面配置您自己的 DeepSeek API Key（点击保存后即可使用）。如已配置但仍失败，请检查 API Key 是否正确，以及服务端能否访问 DeepSeek API。
 
 ---
 

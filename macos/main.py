@@ -129,7 +129,7 @@ def cmd_plan():
         print("=" * 50)
         print("\nPlan saved to cloud, view in Web UI")
     else:
-        print("Plan generation failed. Check LLM API Key config on router.")
+        print("Plan generation failed. Check your API Key in the Web UI (日程建议).")
 
 
 def cmd_status():

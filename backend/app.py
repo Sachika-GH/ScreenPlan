@@ -13,7 +13,7 @@ from flask import Flask, send_from_directory
 
 from config import VERSION
 from database import init_db
-from api import auth_bp, device_bp, usage_bp, schedule_bp, health_bp, friend_bp
+from api import auth_bp, device_bp, usage_bp, schedule_bp, health_bp, friend_bp, user_bp
 
 
 def create_app() -> Flask:
@@ -29,6 +29,7 @@ def create_app() -> Flask:
     app.register_blueprint(schedule_bp)
     app.register_blueprint(health_bp)
     app.register_blueprint(friend_bp)
+    app.register_blueprint(user_bp)
 
     # CORS - allow LAN access from any device
     @app.after_request

@@ -89,7 +89,7 @@ $$('.nav-link').forEach(l => l.addEventListener('click', e => {
   l.classList.add('active');
   $$('.content').forEach(c => c.classList.remove('active'));
   $(`#page-${l.dataset.page}`).classList.add('active');
-  const loaders = { dashboard: loadDashboard, timeline: loadTimeline, schedule: loadSchedule, friends: loadFriends, devices: loadDevices };
+  const loaders = { dashboard: loadDashboard, timeline: loadTimeline, devices: loadDevices, schedule: loadSchedule, friends: loadFriends };
   if (loaders[l.dataset.page]) loaders[l.dataset.page]();
 }));
 
@@ -539,9 +539,70 @@ document.addEventListener('mousemove', e => {
 // Schedule
 // ═══════════════════════════════════════════════════════
 
+async function loadSchedule() {
+  // First check API key status
+  try {
+    const status = await api('/user/llm-key/status');
+    if (status.configured) {
+      showApiKeyConfigured();
+    } else {
+      showApiKeyMissing();
+    }
+  } catch (e) {
+    // If endpoint not available (older backend), show the key input
+    showApiKeyMissing();
+  }
+
+  // Try to load latest analysis
+  try {
+    const r = await api('/schedule/latest');
+    renderSchedule(r.plan_markdown);
+  } catch (e) {
+    $('#schedule-content').innerHTML = '<p class="empty">暂无分析报告，点击上方按钮生成。</p>';
+  }
+  loadFriendSchedules();
+}
+
+function showApiKeyMissing() {
+  $('#schedule-api-key-section').style.display = 'block';
+  $('#schedule-api-key-status').style.display = 'none';
+  $('#schedule-actions').style.display = 'none';
+}
+
+function showApiKeyConfigured() {
+  $('#schedule-api-key-section').style.display = 'none';
+  $('#schedule-api-key-status').style.display = 'flex';
+  $('#schedule-actions').style.display = 'flex';
+}
+
+$('#save-api-key-btn').addEventListener('click', async () => {
+  const key = $('#api-key-input').value.trim();
+  if (!key) {
+    alert('请输入您的 DeepSeek API Key');
+    return;
+  }
+  try {
+    await api('/user/llm-key', { method: 'PUT', body: JSON.stringify({ api_key: key }) });
+    $('#api-key-input').value = '';
+    showApiKeyConfigured();
+  } catch (e) {
+    alert('保存失败：' + e.message);
+  }
+});
+
+$('#remove-api-key-btn').addEventListener('click', async () => {
+  if (!confirm('确认移除 API Key？移除后将无法使用 AI 行为分析功能。')) return;
+  try {
+    await api('/user/llm-key', { method: 'DELETE' });
+    showApiKeyMissing();
+  } catch (e) {
+    alert('移除失败：' + e.message);
+  }
+});
+
 $('#generate-schedule-btn').addEventListener('click', async () => {
   const btn = $('#generate-schedule-btn');
-  btn.textContent = '生成中 ...';
+  btn.textContent = '分析中 ...';
   btn.disabled = true;
   try {
     const r = await api('/schedule/generate', { method: 'POST', body: JSON.stringify({ include_calendar: false }) });
@@ -549,23 +610,13 @@ $('#generate-schedule-btn').addEventListener('click', async () => {
   } catch (e) {
     $('#schedule-content').innerHTML = `<p class="error">${escHtml(e.message)}</p>`;
   }
-  btn.textContent = '生成今日计划';
+  btn.textContent = '生成行为分析';
   btn.disabled = false;
 });
 
-async function loadSchedule() {
-  try {
-    const r = await api('/schedule/latest');
-    renderSchedule(r.plan_markdown);
-  } catch (e) {
-    $('#schedule-content').innerHTML = '<p class="empty">暂无计划，点击上方按钮生成。</p>';
-  }
-  loadFriendSchedules();
-}
-
 function renderSchedule(md) {
   if (!md) {
-    $('#schedule-content').innerHTML = '<p class="empty">暂无计划</p>';
+    $('#schedule-content').innerHTML = '<p class="empty">暂无分析报告</p>';
     return;
   }
   let html = md
@@ -573,6 +624,7 @@ function renderSchedule(md) {
     .replace(/## (.*)/g, '<h2>$1</h2>')
     .replace(/---/g, '<hr>')
     .replace(/> (.*)/g, '<blockquote>$1</blockquote>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/- \[ \] (.*)/g, '<li>&#9744; $1</li>')
     .replace(/- (.*)/g, '<li>$1</li>')
     .replace(/\n\n/g, '</p><p>')
@@ -601,7 +653,7 @@ async function loadFriendSchedules() {
 window.viewFriendSchedule = async (friendId, name) => {
   try {
     const r = await api(`/friends/${friendId}/schedule`);
-    renderSchedule(`### ${name} 的计划\n\n` + r.plan_markdown);
+    renderSchedule(`### ${name} 的报告\n\n` + r.plan_markdown);
   } catch (e) { alert(e.message); }
 };
 

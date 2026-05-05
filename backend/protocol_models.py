@@ -189,3 +189,13 @@ class FullTimelineResponse(BaseModel):
     user_id: int
     date: date
     devices: list[TimelineDeviceSummary]
+
+
+# ─── User Settings ─────────────────────────────────────────────────
+
+class UserLLMKeyRequest(BaseModel):
+    api_key: str = Field(..., min_length=1, max_length=256)
+
+
+class UserLLMKeyStatusResponse(BaseModel):
+    configured: bool

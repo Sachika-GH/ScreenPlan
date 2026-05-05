@@ -1,75 +1,89 @@
 """Prompt templates and schedule generation engine."""
 from datetime import timedelta
 
-SYSTEM_PROMPT = """你是一位专业的时间管理与学习规划助手。你的任务是根据用户多设备的使用数据和日历安排，生成一份切实可行的每日计划。
+SYSTEM_PROMPT = """你是一位专业的屏幕时间行为分析师。你的任务是根据用户多设备的使用数据和活动时间线，对用户的屏幕使用行为进行深度分析，并提供切实可行的改善建议。
 
-## 核心原则
+你**不**负责规划用户的日程——你无法获知用户的日历、工作安排和个人偏好，因此不应替用户做决定。你的价值在于从数据中洞察用户的行为模式，像一个客观的顾问一样给予反馈。
 
-1. **根据日历安排规划时间**：必须优先避开已有的日历事件时间段，在空闲时间段安排任务。
-2. **根据用户习惯调整任务强度**：
-   - 如果娱乐时间过多（>40%），应适当减少任务量，增加缓冲时间。
-   - 如果学习时间充足且专注度高，可适当增加挑战性任务。
-3. **避免理想化计划**：
-   - 不要安排过于密集的任务（连续工作时间不超过用户最长专注时长）。
-   - 每个任务之间应留 5-15 分钟缓冲。
-   - 实际可用的空闲时间不要填满超过 80%。
-4. **区分工作日与周末**：
-   - 工作日：以日历事件为中心，穿插学习任务。
-   - 周末：降低任务强度，以自主学习、复习总结为主。
-5. **提供具体可执行的番茄钟建议**。
+## 核心分析维度
+
+1. **屏幕时间与健康**：根据用户首次开始使用设备和最后一次使用设备的时间，推断大致的清醒/睡眠窗口。关注总屏幕时长是否合理。
+
+2. **学习-娱乐平衡**：分析各设备的学习/娱乐/其他时间占比。识别是否存在"过度娱乐"或"伪学习"（切换频繁但专注度低）的情况。
+
+3. **多设备使用模式**：
+   - 是否存在多设备同时使用的重叠时段（可能分散注意力）
+   - 每个设备的角色分工是否清晰
+   - 设备切换频率是否过高
+
+4. **专注度与时间碎片化**：
+   - 应用切换频率是否过高
+   - 最长连续专注时段有多久
+   - 是否存在"切换疲劳"的迹象
+
+5. **时间分布规律**：
+   - 哪个时段效率最高
+   - 是否有深夜使用的习惯
+   - 使用时间是否集中在某些时段
 
 ## 输出格式（严格遵循）
 
-使用 Markdown 格式，层次分明、适合阅读。不得使用代码块包裹。
+使用 Markdown 格式，层次分明。不得使用代码块包裹。所有内容使用中文。
 
 ---
-### 📋 今日总览
-> 用 1-2 句话概述今天的核心节奏和重点，不超过 100 字。
+
+### 📊 屏幕时间概览
+> 用 1-2 句话概述昨日的屏幕使用总览（总时长、主要设备、学习/娱乐比例），不超过 100 字。
 
 ---
-### ⏱ 时间安排
-使用可勾选的复选框格式，每行一个时段。日历事件标 ⏰，学习任务标 📖，休息标 ☕。
 
+### 🔍 行为模式分析
+分 2-3 段深入分析用户的使用模式。每段 40-80 字。
+
+可参考的分析角度：
+- 是否有明显的"报复性熬夜刷屏"模式？
+- 学习时段是否真心投入，还是频繁切到娱乐应用？
+- 多设备之间能否形成互补，还是互相干扰？
+
+格式：每段以 `**小标题：**` 开头，后接分析文字。
+
+---
+
+### 😴 睡眠与休息推测
+基于用户昨日的首次和末次设备活动时间，推测：
+- 大致清醒时间窗口
+- 大致睡眠时间窗口
+- 睡眠时长是否充足（成人建议 7-8 小时）
+
+如果数据不足以推断睡眠，如实说明。2-3 行即可。
+
+---
+
+### 💡 改善建议（2-3 条）
+基于分析结果，给出具体可行的建议。每条 40-70 字。注意：
+- 建议必须是用户自己做主、可以实际执行的
+- 不要替用户规定具体时间段（如"每天早上 8 点做XXX"）
+- 侧重于习惯养成和策略调整，而非具体任务安排
+
+格式：
 ```
-- [ ] HH:MM-HH:MM  ⏰ 日历事件名称
-- [ ] HH:MM-HH:MM  📖 学习任务 | 具体建议
-- [ ] HH:MM-HH:MM  ☕ 休息/缓冲
+- **建议类别**：具体建议内容。
 ```
 
 ---
-### 🎯 学习重点（2-4条）
-使用复选框，每条 30-50 字。列出最重要的学习目标，按优先级排列。
 
-```
-- [ ] 具体可执行的学习目标1
-- [ ] 具体可执行的学习目标2
-```
+### ⚠️ 值得关注
+1-2 条需要用户警惕的问题或趋势。这些不是批评，而是值得注意的信号。如无特别问题则写"暂无特别需要关注的问题。"
 
 ---
-### 💡 行为建议
-基于昨日的多设备使用数据给出 2-3 条建议，每条 50-80 字。格式：
-
-```
-- 建议类别：具体问题 → 改进方法。
-```
-
----
-### 🍅 番茄钟建议
-给出具体配置，3-4 行，固定格式：
-
-```
-- 单次时长：XX 分钟
-- 休息间隔：XX 分钟
-- 今日轮次：X 轮
-- 执行时段：HH:MM-HH:MM
-```
 
 ## 格式硬性要求
-- 每个 `- [ ]` 项独占一行，项与项之间必须有换行，严禁多个任务挤在同一行。
+- 每个 `- ` 项独占一行，项与项之间必须有换行，严禁多个任务挤在同一行。
 - 各板块标题（### xxx）上下各留一个空行。
 - 各板块间用 `---` 分隔线隔开，分隔线上下也各有一个空行。
 - 输出纯 Markdown，不要用 ``` 包裹。
 - 使用中文。
+- 语气客观、友善，像一位有经验的导师，而非命令式的说教。
 """
 
 
@@ -109,12 +123,13 @@ def build_usage_context(devices: list[dict], union_total: float = None) -> str:
     if not devices:
         return "（暂无使用数据）"
 
-    lines = ["## 昨日多设备使用情况"]
+    lines = ["## 昨日多设备使用数据"]
     if union_total is not None:
         total_all = union_total
     else:
         total_all = round(sum(d["total_minutes"] for d in devices), 1)
     lines.append(f"总计使用时间: {total_all} 分钟 ({round(total_all/60, 1)} 小时)")
+    lines.append(f"设备数量: {len(devices)} 台")
 
     for d in devices:
         lines.append(f"\n### {d['device_name']} ({d['platform']})")
@@ -131,32 +146,73 @@ def build_usage_context(devices: list[dict], union_total: float = None) -> str:
     return "\n".join(lines)
 
 
+def build_multi_day_usage_context(multi_day_data: dict) -> str:
+    """Build a comprehensive usage summary across multiple days.
+    multi_day_data: {date_iso: (devices_list, union_total)} for each day.
+    """
+    if not multi_day_data:
+        return "（暂无使用数据）"
+
+    lines = ["## 近期多设备使用数据"]
+
+    # Sort by date
+    sorted_dates = sorted(multi_day_data.keys())
+
+    # Per-day overview
+    for i, day in enumerate(sorted_dates):
+        devices, union_total = multi_day_data[day]
+        if not devices:
+            continue
+        label = "昨日" if i == len(sorted_dates) - 1 else f"{day}"
+        if union_total is not None:
+            total_all = union_total
+        else:
+            total_all = round(sum(d["total_minutes"] for d in devices), 1)
+        lines.append(f"\n### {label}")
+        lines.append(f"- 总使用时间: {total_all} 分钟 ({round(total_all/60, 1)} 小时)")
+        lines.append(f"- 活跃设备: {len(devices)} 台")
+        for d in devices:
+            lines.append(f"  * {d['device_name']} ({d['platform']}): {d['total_minutes']}分钟, 学习 {d['learning_pct']}%, 娱乐 {d['entertainment_pct']}%")
+
+    # Most recent day's detailed apps
+    if sorted_dates:
+        latest_date = sorted_dates[-1]
+        latest_devices, _ = multi_day_data[latest_date]
+        if latest_devices:
+            lines.append("\n### 最近一日（昨日）详细数据")
+            for d in latest_devices:
+                lines.append(f"\n**{d['device_name']}** ({d['platform']})")
+                lines.append(f"- 使用时长: {d['total_minutes']} 分钟")
+                lines.append(f"- 学习 {d['learning_pct']}% | 娱乐 {d['entertainment_pct']}% | 其他 {d['other_pct']}%")
+                if d.get("top_apps"):
+                    lines.append("- 最常用应用:")
+                    for app in d["top_apps"][:5]:
+                        lines.append(f"  * {app['app_name']}: {app['total_minutes']}分钟 ({app['category']})")
+
+    return "\n".join(lines)
+
+
 def build_user_prompt(
     usage_context: str,
     calendar_text: str = "",
     is_workday: bool = True,
     learning_hours_goal: int = 4,
 ) -> str:
-    """Build the complete user prompt for LLM schedule generation."""
+    """Build the complete user prompt for LLM behavior analysis."""
     from datetime import date
 
     day_type = "工作日" if is_workday else "周末/休息日"
     today = date.today()
 
-    calendar_block = ""
-    if calendar_text:
-        calendar_block = f"""
-## 今日日历安排
-{calendar_text}
-"""
-
     prompt = f"""今天日期：{today.isoformat()} ({day_type})
 
 {usage_context}
-{calendar_block}
-## 用户设置
-- 今日类型：{day_type}
-- 目标学习时长：{learning_hours_goal} 小时
 
-请根据以上信息，生成今日的完整计划。"""
+## 分析要求
+- 今天类型：{day_type}
+- 请**不要**规划用户的今日日程——你没有用户的日历和工作安排信息。
+- 你的任务是分析昨日的屏幕使用数据，发现行为模式，并给出改善建议。
+- 如果数据不足（如数据量很少），请如实说明，不要编造结论。
+
+请根据以上信息，生成本次屏幕时间行为分析报告。"""
     return prompt

@@ -105,6 +105,7 @@ def init_db(db_path: Optional[Path] = None) -> None:
         migrate_duplicate_devices(conn)
         migrate_platform_check(conn)
         migrate_device_platform_unique(conn)
+        migrate_user_llm_api_key(conn)
 
 
 def migrate_duplicate_devices(conn: sqlite3.Connection) -> None:
@@ -184,6 +185,15 @@ def migrate_device_platform_unique(conn: sqlite3.Connection) -> None:
     conn.execute("DROP INDEX IF EXISTS idx_device_user_name_platform")
     conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_device_user_platform ON device(user_id, platform)")
     conn.commit()
+
+
+def migrate_user_llm_api_key(conn: sqlite3.Connection) -> None:
+    """Add llm_api_key column to user table if it doesn't exist."""
+    cursor = conn.execute("PRAGMA table_info(user)")
+    columns = [col[1] for col in cursor.fetchall()]
+    if "llm_api_key" not in columns:
+        conn.execute("ALTER TABLE user ADD COLUMN llm_api_key TEXT DEFAULT ''")
+        conn.commit()
 
 
 def get_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:

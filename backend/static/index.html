@@ -75,7 +75,7 @@
         <span class="nav-icon">&#9776;</span> 设备管理
       </a>
       <a href="#schedule" class="nav-link" data-page="schedule">
-        <span class="nav-icon">&#9779;</span> 日程建议
+        <span class="nav-icon">&#9779;</span> 行为分析
       </a>
       <a href="#friends" class="nav-link" data-page="friends">
         <span class="nav-icon">&#9787;</span> 好友
@@ -141,10 +141,22 @@
 
     <!-- Schedule -->
     <section id="page-schedule" class="content">
-      <h2>AI 日程建议</h2>
-      <div class="schedule-actions">
-        <button id="generate-schedule-btn">生成今日计划</button>
-        <button id="view-friend-schedule-btn" style="display:none">查看好友计划</button>
+      <h2>AI 行为分析</h2>
+      <div id="schedule-api-key-section" class="api-key-section" style="display:none">
+        <p class="api-key-hint">使用 AI 行为分析前，请先配置您的 DeepSeek API Key。</p>
+        <div class="api-key-input-row">
+          <input type="password" id="api-key-input" placeholder="sk-..." maxlength="256">
+          <button id="save-api-key-btn" class="btn-primary">保存</button>
+        </div>
+        <p class="api-key-note">没有 API Key？<a href="https://platform.deepseek.com/api_keys" target="_blank">前往 DeepSeek 获取</a></p>
+      </div>
+      <div id="schedule-api-key-status" class="api-key-status" style="display:none">
+        <span>&#10003; API Key 已配置</span>
+        <button id="remove-api-key-btn">移除</button>
+      </div>
+      <div id="schedule-actions" class="schedule-actions" style="display:none">
+        <button id="generate-schedule-btn">生成行为分析</button>
+        <button id="view-friend-schedule-btn" style="display:none">查看好友报告</button>
       </div>
       <div id="schedule-content" class="markdown-body"></div>
     </section>

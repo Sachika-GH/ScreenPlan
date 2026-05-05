@@ -11,8 +11,9 @@ Environment="SCREENPLAN_DATA_DIR=/opt/screenplan-backend/data"
 Environment="SCREENPLAN_PORT=5051"
 Environment="SCREENPLAN_JWT_SECRET=10b893089a88da3d105947d660c76636bd01ce2ff6a019874190c52245e118e4"
 
-# LLM API
-Environment="DEEPSEEK_API_KEY=sk-97e8a1b0ca66499b98a755caf41924a2"
+# LLM API — 每个用户在 Web UI 中自行配置自己的 API Key
+# 如需设置服务端全局 Key（不推荐），取消注释下面一行：
+# Environment="DEEPSEEK_API_KEY="
 Environment="SCREENPLAN_LLM_API_BASE=https://api.deepseek.com/v1"
 Environment="SCREENPLAN_LLM_MODEL=deepseek-chat"
 

@@ -1,11 +1,17 @@
 """Schedule generation and retrieval routes."""
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from collections import defaultdict
 
 from flask import Blueprint, request, jsonify, g
 
 from database import db_connection
 from protocol_models import ScheduleGenerateRequest, ScheduleResponse
-from schedule_engine import SYSTEM_PROMPT, build_usage_context, build_user_prompt, compute_union_duration
+from schedule_engine import (
+    SYSTEM_PROMPT,
+    build_multi_day_usage_context,
+    build_user_prompt,
+    compute_union_duration,
+)
 from llm_client import generate_plan
 from api.device_routes import require_auth
 
@@ -16,7 +22,6 @@ def _get_usage_summary_for_user(user_id: int, target_date: date):
     """Internal helper to get usage summary for schedule generation.
     Returns (device_summaries: list[dict], union_total: float)."""
     RECORD_INTERVAL_MIN = 3
-    from collections import defaultdict
     with db_connection() as conn:
         devices = conn.execute(
             "SELECT id, name, platform FROM device WHERE user_id = ?",
@@ -94,29 +99,49 @@ def generate():
         return jsonify({"error": str(e)}), 422
 
     target_date = data.date or date.today()
-
-    # Determine workday
     is_workday = target_date.weekday() < 5
 
-    # Get yesterday's usage across all devices
-    from datetime import timedelta
-    yesterday = target_date - timedelta(days=1)
-    devices_usage, union_total = _get_usage_summary_for_user(g.user_id, yesterday)
-    usage_context = build_usage_context(devices_usage, union_total)
+    # Fetch usage data from past 3 days (yesterday excluded because it may be incomplete,
+    # we analyze the 3 days before yesterday for trend analysis, plus yesterday for latest)
+    # Actually: fetch past several days up to yesterday
+    LOOKBACK_DAYS = 3
+    multi_day_data = {}
+    for offset in range(1, LOOKBACK_DAYS + 1):
+        check_date = target_date - timedelta(days=offset)
+        devices_usage, union_total = _get_usage_summary_for_user(g.user_id, check_date)
+        if devices_usage:
+            multi_day_data[check_date.isoformat()] = (devices_usage, union_total)
+
+    usage_context = build_multi_day_usage_context(multi_day_data)
+
+    # If no data at all, provide a default message
+    if not usage_context or usage_context == "（暂无使用数据）":
+        usage_context = "（暂无使用数据——请先确保您的设备已上报至少一天的使用记录）"
 
     # Build prompt
-    calendar_text = ""  # Calendar data comes from macOS agent in future phase
     user_prompt = build_user_prompt(
         usage_context=usage_context,
-        calendar_text=calendar_text,
+        calendar_text="",
         is_workday=is_workday,
         learning_hours_goal=4 if is_workday else 2,
     )
 
+    # Get user's API key from DB (per-user key takes priority over server-level)
+    user_api_key = None
+    with db_connection() as conn:
+        user = conn.execute(
+            "SELECT llm_api_key FROM user WHERE id = ?",
+            (g.user_id,),
+        ).fetchone()
+        if user and user["llm_api_key"]:
+            user_api_key = user["llm_api_key"]
+
     # Call LLM
-    plan_text = generate_plan(SYSTEM_PROMPT, user_prompt)
+    plan_text = generate_plan(SYSTEM_PROMPT, user_prompt, api_key=user_api_key)
     if not plan_text:
-        return jsonify({"error": "LLM 调用失败，请检查 API Key 配置"}), 502
+        if not user_api_key:
+            return jsonify({"error": "请先在 Web UI 的「日程建议」页面配置您的 DeepSeek API Key"}), 402
+        return jsonify({"error": "LLM 调用失败，请检查您的 API Key 是否正确"}), 502
 
     # Save to DB
     with db_connection() as conn:
@@ -148,7 +173,7 @@ def latest():
         ).fetchone()
 
     if not row:
-        return jsonify({"error": "暂无生成的计划"}), 404
+        return jsonify({"error": "暂无分析报告"}), 404
 
     resp = ScheduleResponse(
         id=row["id"],
