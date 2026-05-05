@@ -8,7 +8,6 @@ from .schedule_routes import schedule_bp
 from .health_routes import health_bp
 from .friend_routes import friend_bp
 from .user_routes import user_bp
-from .admin_routes import admin_bp
 
 
-__all__ = ["auth_bp", "device_bp", "usage_bp", "schedule_bp", "health_bp", "friend_bp", "user_bp", "admin_bp"]
+__all__ = ["auth_bp", "device_bp", "usage_bp", "schedule_bp", "health_bp", "friend_bp", "user_bp"]
