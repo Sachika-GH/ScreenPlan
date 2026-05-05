@@ -24,4 +24,7 @@ LLM_MAX_TOKENS = int(os.environ.get("SCREENPLAN_LLM_MAX_TOKENS", "4096"))
 LLM_TEMPERATURE = float(os.environ.get("SCREENPLAN_LLM_TEMPERATURE", "0.7"))
 LLM_TIMEOUT = int(os.environ.get("SCREENPLAN_LLM_TIMEOUT", "120"))
 
+# Admin — for bot / automation access
+ADMIN_TOKEN = os.environ.get("SCREENPLAN_ADMIN_TOKEN", "")
+
 VERSION = "0.1.0"
