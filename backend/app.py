@@ -7,13 +7,40 @@ Usage:
     SCREENPLAN_DATA_DIR=/mnt/usb/screenplan python run.py
 """
 import os
+import re
 from pathlib import Path
 
-from flask import Flask, send_from_directory
+from flask import Flask, request, send_from_directory
 
 from config import VERSION
 from database import init_db
 from api import auth_bp, device_bp, usage_bp, schedule_bp, health_bp, friend_bp, user_bp
+
+# ─── Mobile device detection ──────────────────────────────
+_MOBILE_RE = re.compile(
+    r"(?i)mobile|android|iphone|ipod|blackberry|iemobile|opera mini|"
+    r"webos|kindle|silk|fennec|maemo|symbian|nokia|tizen|"
+    r"ucbrowser|samsungbrowser"
+)
+
+
+def _is_mobile(user_agent: str) -> bool:
+    """Detect mobile devices from User-Agent string."""
+    if not user_agent:
+        return False
+    # iPadOS 13+ reports as desktop; check for touch capability
+    if "iPad" in user_agent or "Macintosh" in user_agent and "AppleWebKit" in user_agent:
+        return False
+    return bool(_MOBILE_RE.search(user_agent))
+
+
+def _index_file(static_dir: Path, ua: str) -> str:
+    """Choose the right index.html based on device type."""
+    mobile_index = static_dir / "index_mobile.html"
+    desktop_index = static_dir / "index.html"
+    if mobile_index.exists() and _is_mobile(ua):
+        return "index_mobile.html"
+    return "index.html"
 
 
 def create_app() -> Flask:
@@ -41,7 +68,6 @@ def create_app() -> Flask:
 
     @app.before_request
     def handle_options():
-        from flask import request
         if request.method == "OPTIONS":
             return app.make_default_options_response()
 
@@ -52,13 +78,19 @@ def create_app() -> Flask:
         if path.startswith("api/") or path.startswith("static/"):
             from flask import abort
             abort(404)
-        index_path = static_dir / "index.html"
-        if index_path.exists() and (path == "" or path == "index.html" or "." not in path):
-            return send_from_directory(str(static_dir), "index.html")
+
+        ua = request.headers.get("User-Agent", "")
+        idx = _index_file(static_dir, ua)
+        idx_path = static_dir / idx
+
+        if idx_path.exists() and (path == "" or path == "index.html" or path == "index_mobile.html" or "." not in path):
+            return send_from_directory(str(static_dir), idx)
+
         file_path = static_dir / path
         if file_path.exists():
             return send_from_directory(str(static_dir), path)
-        return send_from_directory(str(static_dir), "index.html")
+
+        return send_from_directory(str(static_dir), idx)
 
     return app
 

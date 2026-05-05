@@ -2,6 +2,30 @@
 const API = `${location.protocol}//${location.host}/api`;
 let AUTH = { token: '', userId: 0, displayName: '', email: '' };
 
+// ─── Theme ──────────────────────────────────────────────
+(function initTheme() {
+  const saved = localStorage.getItem('screenplan_theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('screenplan_theme')) {
+      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    }
+  });
+})();
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('screenplan_theme', next);
+}
+
+document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
+
 // ─── Helpers ───────────────────────────────────────────
 function $(sel) { return document.querySelector(sel); }
 function $$(sel) { return document.querySelectorAll(sel); }

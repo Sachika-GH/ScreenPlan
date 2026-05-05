@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fafaf9">
+<title>ScreenPlan</title>
+<style>
+  /* ═══════════════════════════════════════════════════════
+     ScreenPlan Mobile — Refined Japanese Minimalist
+     ═══════════════════════════════════════════════════════ */
+
+  :root {
+    --bg: #f5f2eb;
+    --card-bg: #fefcf9;
+    --card-border: #e8e3d8;
+    --text: #2c2416;
+    --text-2: #6b5e4a;
+    --text-3: #a39880;
+    --selection: #f0ebe0;
+    --brand: #2954a6;
+    --brand-soft: #eaf0fb;
+    --brand-glow: rgba(41,84,166,0.08);
+    --green: #3b7d4e;
+    --amber: #c27816;
+    --red: #c53b3b;
+    --purple: #6b4e9c;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+    --shadow: 0 1px 3px rgba(44,36,22,0.04), 0 2px 12px rgba(44,36,22,0.04);
+    --shadow-lg: 0 4px 20px rgba(44,36,22,0.06), 0 8px 32px rgba(44,36,22,0.05);
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font-mono: 'SF Mono', 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    --tab-height: 72px;
+    --header-h: 52px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  [data-theme="dark"] {
+    --bg: #141210;
+    --card-bg: #1d1a16;
+    --card-border: #2e2a22;
+    --text: #e8e2d4;
+    --text-2: #9d9480;
+    --text-3: #665e50;
+    --selection: #252118;
+    --brand: #6098f0;
+    --brand-soft: #1a2535;
+    --brand-glow: rgba(96,152,240,0.08);
+    --green: #5cb870;
+    --amber: #e8a62e;
+    --red: #e06060;
+    --purple: #9b7ad4;
+    --shadow: 0 1px 3px rgba(0,0,0,0.15), 0 2px 12px rgba(0,0,0,0.12);
+    --shadow-lg: 0 4px 20px rgba(0,0,0,0.2), 0 8px 32px rgba(0,0,0,0.16);
+  }
+
+  [data-theme="dark"] .login-svg-bg { opacity: 0.3; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    padding-top: var(--header-h);
+    padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 8px);
+    transition: background 0.4s var(--ease), color 0.4s var(--ease);
+  }
+
+  /* ─── Header ───────────────────────────────── */
+  .header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    height: var(--header-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--card-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: background 0.4s, border-color 0.4s;
+  }
+  .header-title {
+    font-size: 17px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.2px;
+  }
+  .header-actions { display: flex; gap: 4px; align-items: center; }
+  .header-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: none; background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--text-2); transition: all 0.3s var(--ease);
+  }
+  .header-btn:active { background: var(--selection); transform: scale(0.92); }
+
+  /* ─── Tab Bar ───────────────────────────────── */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding-bottom: var(--safe-bottom);
+    background: var(--card-bg);
+    border-top: 1px solid var(--card-border);
+    display: flex; z-index: 50;
+    transition: background 0.4s, border-color 0.4s;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px; padding: 8px 0 6px;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-3); transition: all 0.25s var(--ease);
+    -webkit-tap-highlight-color: transparent;
+    font-family: var(--font); font-size: 10px; font-weight: 500;
+  }
+  .tab-item .tab-icon { font-size: 22px; transition: transform 0.3s var(--ease); }
+  .tab-item.active { color: var(--brand); }
+  .tab-item.active .tab-icon { transform: translateY(-2px); }
+  .tab-item:active { opacity: 0.7; }
+
+  /* ─── Pages ───────────────────────────────── */
+  .page { display: none; padding: 16px; animation: pageIn 0.35s var(--ease); }
+  .page.active { display: block; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-title { font-size: 22px; font-weight: 800; margin-bottom: 20px; letter-spacing: -0.3px; }
+
+  /* ─── Login ───────────────────────────────── */
+  #login-page-special { padding: 0; display: none; min-height: 100dvh; background: var(--bg); }
+  #login-page-special.active { display: flex; align-items: center; justify-content: center; }
+  body.logged-in #login-page-special { display: none; }
+  body.logged-in .header, body.logged-in .tab-bar { display: flex; }
+
+  .login-wrapper {
+    width: 100%; max-width: 360px; padding: 40px 28px;
+    text-align: center; animation: pageIn 0.5s var(--ease);
+  }
+  .login-logo {
+    width: 56px; height: 56px; margin: 0 auto 20px;
+    background: linear-gradient(135deg, #1e4378, var(--brand)); border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: #fff; font-weight: 800;
+    box-shadow: 0 8px 24px var(--brand-glow);
+  }
+  .login-wrapper h1 { font-size: 26px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.4px; }
+  .login-wrapper .sub { color: var(--text-3); font-size: 13px; margin-bottom: 28px; }
+  .login-tab-row {
+    display: flex; background: var(--selection); border-radius: var(--radius-sm);
+    padding: 3px; margin-bottom: 24px;
+  }
+  .login-tab-row button {
+    flex: 1; padding: 10px 0; border: none; border-radius: calc(var(--radius-sm) - 2px);
+    background: transparent; color: var(--text-2); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s var(--ease); font-family: var(--font);
+  }
+  .login-tab-row button.active { background: var(--card-bg); color: var(--text); box-shadow: var(--shadow); }
+  .login-field { margin-bottom: 14px; text-align: left; }
+  .login-field label {
+    display: block; font-size: 11px; font-weight: 700; color: var(--text-2);
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .login-field input {
+    width: 100%; padding: 13px 16px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--text); font-size: 15px; font-family: var(--font);
+    outline: none; transition: all 0.2s var(--ease);
+  }
+  .login-field input:focus {
+    border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-glow);
+  }
+  .login-field input::placeholder { color: var(--text-3); }
+  .btn-login {
+    width: 100%; padding: 14px; border-radius: var(--radius-sm);
+    border: none; background: linear-gradient(135deg, #1e4378, var(--brand));
+    color: #fff; font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: all 0.25s var(--ease); font-family: var(--font);
+    box-shadow: 0 4px 16px var(--brand-glow);
+    margin-top: 4px;
+  }
+  .btn-login:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-login:disabled { opacity: 0.5; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 8px; min-height: 20px; }
+
+  /* ─── Cards ───────────────────────────────── */
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius); padding: 16px 18px;
+    box-shadow: var(--shadow); transition: all 0.25s var(--ease);
+    position: relative; overflow: hidden;
+  }
+  .stat-card:active { transform: scale(0.98); }
+  .stat-card .label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .stat-card .value { font-size: 28px; font-weight: 800; color: var(--text); font-family: var(--font-mono); line-height: 1.1; }
+  .stat-card .value span { font-size: 14px; color: var(--text-2); font-weight: 500; font-family: var(--font); }
+  .stat-card .stripe {
+    position: absolute; top: 0; left: 12px; right: 12px; height: 3px;
+    border-radius: 0 0 4px 4px; background: var(--brand); opacity: 0.15;
+  }
+
+  .device-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius); padding: 18px 20px;
+    box-shadow: var(--shadow); margin-bottom: 12px;
+    transition: all 0.25s var(--ease);
+  }
+  .device-card:active { transform: scale(0.985); }
+  .device-card .d-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .device-card .d-name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .device-card .badge {
+    font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+    background: var(--brand-soft); color: var(--brand); letter-spacing: 0.3px;
+  }
+  .device-card .bar-wrap {
+    height: 6px; border-radius: 3px; background: var(--selection);
+    display: flex; overflow: hidden; margin-bottom: 10px;
+  }
+  .bar-wrap .bar-learn { background: var(--brand); height: 100%; border-radius: 3px 0 0 3px; }
+  .bar-wrap .bar-entertain { background: var(--amber); height: 100%; }
+  .bar-wrap .bar-other { background: var(--text-3); height: 100%; }
+  .device-card .d-meta { font-size: 13px; color: var(--text-2); }
+  .device-card .top-apps { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--card-border); }
+  .device-card .app-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--text-2); }
+  .device-card .app-row .app-name { color: var(--text); font-weight: 600; }
+
+  /* ─── Timeline ───────────────────────────────── */
+  .tl-header { margin-bottom: 16px; }
+  .tl-date-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+  }
+  .tl-date-row input[type="date"] {
+    flex: 1; padding: 12px 16px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--text); font-size: 15px; font-family: var(--font);
+    font-weight: 600; outline: none;
+  }
+  .tl-date-row input[type="date"]:focus { border-color: var(--brand); }
+  .btn-arrow {
+    width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--card-border);
+    background: var(--card-bg); color: var(--text-2); cursor: pointer;
+    font-size: 20px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s var(--ease); flex-shrink: 0;
+  }
+  .btn-arrow:active { background: var(--selection); transform: scale(0.92); }
+  .btn-refresh {
+    width: 100%; padding: 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--brand); font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s var(--ease); font-family: var(--font);
+  }
+  .btn-refresh:active { background: var(--brand-soft); }
+
+  .tl-device-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
+    box-shadow: var(--shadow); transition: all 0.2s var(--ease);
+  }
+  .tl-device-card .tld-header { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .tl-device-card .tld-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: var(--brand-soft); display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--brand); flex-shrink: 0;
+  }
+  .tl-device-card .tld-name { font-size: 15px; font-weight: 700; }
+  .tl-device-card .tld-platform { font-size: 11px; color: var(--text-3); font-weight: 600; }
+  .tl-device-card .tld-stats { display: flex; gap: 20px; padding-top: 12px; border-top: 1px solid var(--card-border); }
+  .tl-device-card .tld-stat-val { font-size: 20px; font-weight: 800; font-family: var(--font-mono); }
+  .tl-device-card .tld-stat-lbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; }
+  .tl-device-card .tld-bar { height: 6px; border-radius: 3px; background: var(--selection); display: flex; overflow: hidden; margin-top: 12px; }
+  .tl-device-card .tld-bar .learn { background: var(--brand); }
+  .tl-device-card .tld-bar .entertain { background: var(--amber); }
+  .tl-device-card .tld-bar .other { background: var(--text-3); }
+
+  .tl-blocks { margin-top: 20px; }
+  .tl-block {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; background: var(--card-bg);
+    border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+    margin-bottom: 8px; transition: all 0.2s var(--ease);
+    box-shadow: var(--shadow);
+  }
+  .tl-block .cat-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .tl-block .cat-dot.learning { background: var(--brand); }
+  .tl-block .cat-dot.entertainment { background: var(--amber); }
+  .tl-block .cat-dot.other { background: var(--text-3); }
+  .tl-block .block-info { flex: 1; min-width: 0; }
+  .tl-block .block-app { font-size: 14px; font-weight: 600; color: var(--text); }
+  .tl-block .block-cat { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+  .tl-block .block-time {
+    font-size: 12px; color: var(--text-2); font-family: var(--font-mono);
+    flex-shrink: 0; text-align: right;
+  }
+  .tl-empty {
+    text-align: center; padding: 48px 20px; color: var(--text-3);
+  }
+  .tl-empty .empty-icon { font-size: 48px; opacity: 0.15; margin-bottom: 16px; }
+
+  /* ─── Legend ───────────────────────────────── */
+  .legend-row { display: flex; gap: 20px; padding: 12px 16px; font-size: 13px; color: var(--text-2); align-items: center; margin-bottom: 8px; }
+  .legend-row .ldot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; margin-right: 6px; }
+  .ldot.learning { background: var(--brand); }
+  .ldot.entertainment { background: var(--amber); }
+  .ldot.other { background: var(--text-3); }
+
+  /* ─── Devices ───────────────────────────────── */
+  .dev-form { display: flex; gap: 8px; margin-bottom: 20px; }
+  .dev-form input {
+    flex: 1; min-width: 0; padding: 13px 16px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--text); font-size: 15px; font-family: var(--font); outline: none;
+  }
+  .dev-form input:focus { border-color: var(--brand); }
+  .dev-form select {
+    padding: 13px 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--text); font-size: 14px; font-family: var(--font); outline: none;
+    cursor: pointer; max-width: 110px;
+  }
+  .btn-primary {
+    padding: 12px 20px; border-radius: var(--radius-sm); border: none;
+    background: var(--brand); color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: var(--font); white-space: nowrap;
+    transition: all 0.2s var(--ease); box-shadow: 0 2px 8px var(--brand-glow);
+  }
+  .btn-primary:active { transform: scale(0.95); opacity: 0.85; }
+  .dev-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 18px; background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow);
+  }
+  .dev-item-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dev-item-name { font-size: 15px; font-weight: 700; }
+  .dev-item-date { font-size: 11px; color: var(--text-3); font-weight: 500; }
+  .dev-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-sm {
+    padding: 7px 14px; border-radius: var(--radius-xs); border: none;
+    background: var(--selection); color: var(--text-2); font-size: 12px;
+    font-weight: 600; cursor: pointer; font-family: var(--font); transition: all 0.2s var(--ease);
+  }
+  .btn-sm:active { transform: scale(0.93); opacity: 0.8; }
+  .btn-sm.danger { color: var(--red); }
+
+  /* ─── Schedule ───────────────────────────────── */
+  .api-key-box {
+    background: var(--brand-soft); border: 1.5px solid var(--card-border);
+    border-radius: var(--radius); padding: 18px 20px; margin-bottom: 18px;
+  }
+  .api-key-box p { font-size: 14px; color: var(--text-2); margin-bottom: 12px; }
+  .api-key-row { display: flex; gap: 8px; }
+  .api-key-row input {
+    flex: 1; min-width: 0; padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--text); font-size: 13px; font-family: var(--font-mono); outline: none;
+  }
+  .api-key-row input:focus { border-color: var(--brand); }
+  .api-key-status {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: var(--card-bg);
+    border: 1.5px solid var(--green); border-left: 4px solid var(--green);
+    border-radius: var(--radius-sm); margin-bottom: 16px;
+    font-size: 13px; color: var(--green); font-weight: 600;
+  }
+  .api-key-note { font-size: 11px; color: var(--text-3); margin-top: 8px; }
+  .api-key-note a { color: var(--brand); }
+  .btn-generate {
+    width: 100%; padding: 14px; border-radius: var(--radius-sm);
+    border: none; background: linear-gradient(135deg, #1e4378, var(--brand));
+    color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: var(--font); margin-bottom: 20px;
+    box-shadow: 0 4px 16px var(--brand-glow); transition: all 0.2s var(--ease);
+  }
+  .btn-generate:active { transform: scale(0.96); opacity: 0.85; }
+  .btn-generate:disabled { opacity: 0.5; }
+  .markdown-body {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius); padding: 20px 22px; line-height: 1.8;
+    font-size: 14px; box-shadow: var(--shadow);
+  }
+  .markdown-body h2 { font-size: 18px; color: var(--brand); margin: 14px 0 8px; }
+  .markdown-body h3 { font-size: 15px; color: var(--brand); margin: 16px 0 8px; font-weight: 700; }
+  .markdown-body hr { border: none; border-top: 1px solid var(--card-border); margin: 16px 0; }
+  .markdown-body blockquote {
+    color: var(--text-2); border-left: 3px solid var(--brand); padding: 6px 14px;
+    margin: 8px 0; background: var(--brand-soft); border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    font-size: 13px;
+  }
+  .markdown-body li { margin: 4px 0; list-style: none; }
+  .markdown-body .empty { color: var(--text-3); font-style: italic; }
+
+  /* ─── Friends ───────────────────────────────── */
+  .friend-input-row { display: flex; gap: 8px; margin-bottom: 24px; }
+  .friend-input-row input {
+    flex: 1; min-width: 0; padding: 13px 16px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--card-border); background: var(--card-bg);
+    color: var(--text); font-size: 15px; font-family: var(--font); outline: none;
+  }
+  .friend-input-row input:focus { border-color: var(--brand); }
+  .section-label {
+    font-size: 12px; font-weight: 700; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.8px; margin: 20px 0 10px;
+  }
+  .req-card, .friend-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow);
+  }
+  .req-card .info, .friend-card .info { display: flex; flex-direction: column; gap: 2px; }
+  .req-card .name, .friend-card .name { font-size: 14px; font-weight: 700; }
+  .req-card .email, .friend-card .email { font-size: 12px; color: var(--text-2); }
+  .req-card .actions, .friend-card .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-accept { background: var(--brand); color: #fff; }
+  .btn-deny { background: var(--selection); color: var(--text-2); }
+  .btn-remove { color: var(--red); background: transparent; border: 1px solid var(--card-border); }
+  .share-row { display: flex; gap: 10px; margin-right: 8px; font-size: 11px; color: var(--text-2); }
+  .share-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: 600; }
+  .share-row input[type="checkbox"] { accent-color: var(--brand); }
+
+  /* ─── Misc ───────────────────────────────── */
+  .text-muted { color: var(--text-3); font-size: 13px; text-align: center; padding: 20px; }
+  .divider { height: 1px; background: var(--card-border); margin: 20px 0; }
+  .inline-flex { display: inline-flex; }
+
+  @media (min-width: 480px) {
+    .cards-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<header class="header" id="header" style="display:none">
+  <div class="header-title" id="header-title">ScreenPlan</div>
+  <div class="header-actions">
+    <button class="header-btn" id="theme-toggle-mobile" title="深色模式" aria-label="切换深色模式">&#9789;</button>
+    <button class="header-btn" id="logout-mobile" title="退出登录">&#10149;</button>
+  </div>
+</header>
+
+<!-- ═══ Tab Bar ═══ -->
+<nav class="tab-bar" id="tab-bar" style="display:none">
+  <button class="tab-item active" data-page="dashboard">
+    <span class="tab-icon">&#9641;</span>概览
+  </button>
+  <button class="tab-item" data-page="timeline">
+    <span class="tab-icon">&#9716;</span>时间线
+  </button>
+  <button class="tab-item" data-page="devices">
+    <span class="tab-icon">&#9881;</span>设备
+  </button>
+  <button class="tab-item" data-page="schedule">
+    <span class="tab-icon">&#9830;</span>分析
+  </button>
+  <button class="tab-item" data-page="friends">
+    <span class="tab-icon">&#9787;</span>好友
+  </button>
+</nav>
+
+<!-- ═══ Login Page (special — no tabs/header) ═══ -->
+<div id="login-page-special" class="active">
+  <div class="login-wrapper">
+    <div class="login-logo">S</div>
+    <h1>ScreenPlan</h1>
+    <p class="sub">跨设备屏幕时间 · AI 日程规划</p>
+    <div class="login-tab-row" id="login-tab-row">
+      <button class="active" data-form="login-form">登录</button>
+      <button data-form="register-form">注册</button>
+    </div>
+    <form id="login-form" class="active">
+      <div class="login-field"><label>邮箱地址</label><input type="email" id="login-email" placeholder="your@email.com" required autocomplete="email"></div>
+      <div class="login-field"><label>密码</label><input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password"></div>
+      <button type="submit" class="btn-login">登 录</button>
+      <p class="login-error" id="login-error"></p>
+    </form>
+    <form id="register-form" style="display:none">
+      <div class="login-field"><label>家庭名称</label><input type="text" id="reg-family" placeholder="例如：我的家庭" required></div>
+      <div class="login-field"><label>显示名称</label><input type="text" id="reg-display" placeholder="你的名字" required></div>
+      <div class="login-field"><label>邮箱地址</label><input type="email" id="reg-email" placeholder="your@email.com" required autocomplete="email"></div>
+      <div class="login-field"><label>密码（6位以上）</label><input type="password" id="reg-password" placeholder="至少6位" required autocomplete="new-password"></div>
+      <button type="submit" class="btn-login">注 册</button>
+      <p class="login-error" id="reg-error"></p>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ Dashboard ═══ -->
+<section class="page" id="page-dashboard">
+  <h1 class="page-title">今日概览</h1>
+  <div class="cards-grid" id="summary-grid"></div>
+  <div id="dashboard-devices"></div>
+</section>
+
+<!-- ═══ Timeline ═══ -->
+<section class="page" id="page-timeline">
+  <h1 class="page-title">设备时间线</h1>
+  <div class="tl-header">
+    <div class="tl-date-row">
+      <button class="btn-arrow" id="date-prev" title="前一天">&lsaquo;</button>
+      <input type="date" id="timeline-date">
+      <button class="btn-arrow" id="date-next" title="后一天">&rsaquo;</button>
+    </div>
+    <button class="btn-refresh" id="timeline-refresh">刷新数据</button>
+  </div>
+  <div class="legend-row">
+    <span><span class="ldot learning"></span>学习</span>
+    <span><span class="ldot entertainment"></span>娱乐</span>
+    <span><span class="ldot other"></span>其他</span>
+  </div>
+  <div id="timeline-summary"></div>
+  <div id="timeline-blocks" class="tl-blocks"></div>
+</section>
+
+<!-- ═══ Devices ═══ -->
+<section class="page" id="page-devices">
+  <h1 class="page-title">设备管理</h1>
+  <div class="dev-form">
+    <input type="text" id="new-device-name" placeholder="设备名称" maxlength="64">
+    <select id="new-device-platform">
+      <option value="windows">Windows</option><option value="macos">macOS</option>
+      <option value="ios">iOS</option><option value="android">Android</option>
+      <option value="linux">Linux</option>
+    </select>
+    <button class="btn-primary" id="register-device-btn">注册</button>
+  </div>
+  <div id="device-list"></div>
+</section>
+
+<!-- ═══ AI Analysis ═══ -->
+<section class="page" id="page-schedule">
+  <h1 class="page-title">AI 行为分析</h1>
+  <div id="api-key-missing" style="display:none">
+    <div class="api-key-box">
+      <p>使用 AI 行为分析前，请先配置 DeepSeek API Key</p>
+      <div class="api-key-row">
+        <input type="password" id="api-key-input" placeholder="sk-..." maxlength="256">
+        <button class="btn-primary" id="save-api-key-btn">保存</button>
+      </div>
+      <p class="api-key-note">没有 API Key？<a href="https://platform.deepseek.com/api_keys" target="_blank">前往 DeepSeek 获取</a></p>
+    </div>
+  </div>
+  <div id="api-key-ok" style="display:none">
+    <div class="api-key-status">
+      <span>&#10003; API Key 已配置</span>
+      <button class="btn-sm danger" id="remove-api-key-btn">移除</button>
+    </div>
+    <button class="btn-generate" id="generate-btn">生成行为分析</button>
+  </div>
+  <div id="schedule-content" class="markdown-body"></div>
+</section>
+
+<!-- ═══ Friends ═══ -->
+<section class="page" id="page-friends">
+  <h1 class="page-title">好友</h1>
+  <div class="friend-input-row">
+    <input type="email" id="friend-email" placeholder="输入好友邮箱地址">
+    <button class="btn-primary" id="send-friend-request">添加</button>
+  </div>
+  <div class="section-label">收到的请求</div>
+  <div id="received-requests"></div>
+  <div class="section-label">已发送的请求</div>
+  <div id="sent-requests"></div>
+  <div class="section-label">好友列表</div>
+  <div id="friends-list"></div>
+</section>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ScreenPlan Mobile — SPA Application
+// ═══════════════════════════════════════════════════════════
+
+const API = `${location.protocol}//${location.host}/api`;
+let AUTH = { token: '', userId: 0, displayName: '', email: '' };
+
+const PLATFORM_ICONS = { macos:'💻', windows:'🖥️', ios:'📱', android:'📱', linux:'💻' };
+
+function $(s) { return document.querySelector(s); }
+function $$(s) { return document.querySelectorAll(s); }
+
+function api(url, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (AUTH.token) headers['Authorization'] = `Bearer ${AUTH.token}`;
+  return fetch(API + url, { ...opts, headers }).then(r => {
+    if (!r.ok) return r.json().then(e => { throw new Error(e.error || r.statusText); });
+    return r.json();
+  });
+}
+
+function fmtTime(iso) {
+  if (!iso) return '';
+  let d;
+  if (iso.includes('+') || iso.includes('Z') || iso.endsWith('z')) d = new Date(iso);
+  else d = new Date(iso + '+08:00');
+  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function parseTz(iso) {
+  if (!iso) return new Date();
+  if (iso.includes('+') || iso.includes('Z') || iso.endsWith('z')) return new Date(iso);
+  return new Date(iso + '+08:00');
+}
+
+function fmtMinutes(m) { return m >= 60 ? `${(m/60).toFixed(1)}h` : `${m}min`; }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ─── Theme ──────────────────────────────────────────────
+(function initTheme() {
+  const saved = localStorage.getItem('screenplan_theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('screenplan_theme')) {
+      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    }
+  });
+  updateThemeIcon();
+})();
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('screenplan_theme', next);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const btn = $('#theme-toggle-mobile');
+  if (btn) btn.innerHTML = isDark ? '&#9788;' : '&#9789;';
+}
+
+$('#theme-toggle-mobile')?.addEventListener('click', toggleTheme);
+
+// ─── Auth ──────────────────────────────────────────────
+$('#login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#login-form').querySelector('.btn-login');
+  btn.disabled = true; btn.textContent = '登录中...';
+  try {
+    const r = await api('/auth/login', { method: 'POST', body: JSON.stringify({
+      email: $('#login-email').value, password: $('#login-password').value
+    })});
+    setAuth(r);
+  } catch (err) { $('#login-error').textContent = err.message; }
+  btn.disabled = false; btn.textContent = '登 录';
+});
+
+$('#register-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#register-form').querySelector('.btn-login');
+  btn.disabled = true; btn.textContent = '注册中...';
+  try {
+    const r = await api('/auth/register', { method: 'POST', body: JSON.stringify({
+      family_name: $('#reg-family').value,
+      display_name: $('#reg-display').value,
+      email: $('#reg-email').value,
+      password: $('#reg-password').value,
+    })});
+    setAuth(r);
+  } catch (err) { $('#reg-error').textContent = err.message; }
+  btn.disabled = false; btn.textContent = '注 册';
+});
+
+function setAuth(data) {
+  AUTH = { token: data.access_token, userId: data.user_id, displayName: data.display_name, email: '' };
+  document.body.classList.add('logged-in');
+  $('#login-page-special').classList.remove('active');
+  $('#header').style.display = 'flex';
+  $('#tab-bar').style.display = 'flex';
+  sessionStorage.setItem('screenplan_token', data.access_token);
+  sessionStorage.setItem('screenplan_user', JSON.stringify({ userId: data.user_id, displayName: data.display_name }));
+  loadDashboard();
+}
+
+$('#logout-mobile').addEventListener('click', () => {
+  AUTH = { token: '', userId: 0, displayName: '' };
+  sessionStorage.clear();
+  document.body.classList.remove('logged-in');
+  $('#header').style.display = 'none';
+  $('#tab-bar').style.display = 'none';
+  $$('.page').forEach(p => p.classList.remove('active'));
+  $('#login-page-special').classList.add('active');
+});
+
+// ─── Login tabs ────────────────────────────────────────
+$$('#login-tab-row button').forEach(btn => btn.addEventListener('click', () => {
+  $$('#login-tab-row button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  $$('#login-page-special form').forEach(f => f.style.display = 'none');
+  $(`#${btn.dataset.form}`).style.display = 'block';
+  $('#login-error').textContent = '';
+  $('#reg-error').textContent = '';
+}));
+
+// ─── Tab Navigation ────────────────────────────────────
+$$('.tab-item').forEach(tab => tab.addEventListener('click', () => {
+  $$('.tab-item').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  $$('.page').forEach(p => p.classList.remove('active'));
+  $(`#page-${tab.dataset.page}`).classList.add('active');
+  const loaders = {
+    dashboard: loadDashboard, timeline: loadTimeline,
+    devices: loadDevices, schedule: loadSchedule, friends: loadFriends
+  };
+  if (loaders[tab.dataset.page]) loaders[tab.dataset.page]();
+  $('#header-title').textContent = tab.textContent.trim();
+}));
+
+// ─── Session restore ───────────────────────────────────
+(function restore() {
+  const tok = sessionStorage.getItem('screenplan_token');
+  const usr = JSON.parse(sessionStorage.getItem('screenplan_user') || 'null');
+  if (tok && usr) {
+    AUTH = { token: tok, userId: usr.userId, displayName: usr.displayName };
+    document.body.classList.add('logged-in');
+    $('#login-page-special').classList.remove('active');
+    $('#header').style.display = 'flex';
+    $('#tab-bar').style.display = 'flex';
+    loadDashboard();
+  }
+})();
+
+// ═══ Dashboard ═══════════════════════════════════════
+
+async function loadDashboard() {
+  try {
+    const s = await api('/usage/summary');
+    renderSummary(s);
+    renderDeviceCards(s);
+  } catch (e) { console.error(e); }
+}
+
+function renderSummary(s) {
+  const total = s.total_minutes_all_devices || 0;
+  const devCount = s.devices?.length || 0;
+  const overlap = s.overlap_minutes || 0;
+  let lPct = 0, ePct = 0;
+  if (s.devices?.length) {
+    const tl = s.devices.reduce((a,d) => a + d.total_minutes, 0) || 1;
+    s.devices.forEach(d => {
+      lPct += (d.learning_pct || 0) * (d.total_minutes / tl);
+      ePct += (d.entertainment_pct || 0) * (d.total_minutes / tl);
+    });
+  }
+  let overlapHtml = '';
+  if (overlap > 0) {
+    overlapHtml = `<div class="stat-card"><div class="stripe"></div>
+      <div class="label">重叠时间</div>
+      <div class="value">${overlap.toFixed(0)}<span>min</span></div></div>`;
+  }
+  $('#summary-grid').innerHTML = `
+    <div class="stat-card"><div class="stripe"></div><div class="label">设备数</div><div class="value">${devCount}</div></div>
+    <div class="stat-card"><div class="stripe"></div><div class="label">总时长</div><div class="value">${(total/60).toFixed(1)}<span>h</span></div></div>
+    ${overlapHtml}
+    <div class="stat-card"><div class="stripe"></div><div class="label">学习占比</div><div class="value">${lPct.toFixed(0)}<span>%</span></div></div>
+  `;
+}
+
+function renderDeviceCards(s) {
+  $('#dashboard-devices').innerHTML = (s.devices || []).map(d => `
+    <div class="device-card">
+      <div class="d-header">
+        <span class="d-name"><span>${PLATFORM_ICONS[d.platform]||'&#9673;'}</span> ${escHtml(d.device_name)}</span>
+        <span class="badge">${d.platform}</span>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-learn" style="width:${d.learning_pct||0}%"></div>
+        <div class="bar-entertain" style="width:${d.entertainment_pct||0}%"></div>
+        <div class="bar-other" style="width:${d.other_pct||0}%"></div>
+      </div>
+      <div class="d-meta">${d.total_minutes} 分钟 · 最长专注 ${d.longest_focus_minutes}min</div>
+      <div class="top-apps">${(d.top_apps||[]).slice(0,5).map(a => `
+        <div class="app-row"><span class="app-name">${escHtml(a.app_name)}</span><span>${a.total_minutes}min</span></div>
+      `).join('')}</div>
+    </div>
+  `).join('') || `<div class="tl-empty"><div class="empty-icon">&#9641;</div>暂无设备数据</div>`;
+}
+
+// ═══ Timeline ═══════════════════════════════════════
+
+let timelineDate = '';
+$('#timeline-date').value = new Date().toISOString().split('T')[0];
+$('#timeline-refresh').addEventListener('click', loadTimeline);
+
+$('#date-prev').addEventListener('click', () => {
+  const d = new Date($('#timeline-date').value + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  $('#timeline-date').value = d.toISOString().split('T')[0];
+  loadTimeline();
+});
+$('#date-next').addEventListener('click', () => {
+  const d = new Date($('#timeline-date').value + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  $('#timeline-date').value = d.toISOString().split('T')[0];
+  loadTimeline();
+});
+
+function mergeTimelineEvents(events) {
+  if (!events || !events.length) return [];
+  const sorted = [...events].sort((a,b) => parseTz(a.timestamp) - parseTz(b.timestamp));
+  const merged = [];
+  let cur = { start: sorted[0].timestamp, end: sorted[0].timestamp, category: sorted[0].category, apps: [sorted[0].app_name] };
+  for (let i = 1; i < sorted.length; i++) {
+    const evt = sorted[i];
+    const gap = (parseTz(evt.timestamp) - parseTz(cur.end)) / 60000;
+    if (evt.category === cur.category && gap <= 4) {
+      cur.end = evt.timestamp;
+      if (!cur.apps.includes(evt.app_name)) cur.apps.push(evt.app_name);
+    } else {
+      merged.push(cur);
+      cur = { start: evt.timestamp, end: evt.timestamp, category: evt.category, apps: [evt.app_name] };
+    }
+  }
+  merged.push(cur);
+  return merged;
+}
+
+function computeDeviceStats(events) {
+  if (!events || !events.length) return { total: 0, learning: 0, entertainment: 0, other: 0, appCount: 0 };
+  const cats = { learning: 0, entertainment: 0, other: 0 };
+  const appSet = new Set();
+  events.forEach(evt => { cats[evt.category] = (cats[evt.category] || 0) + 1; appSet.add(evt.app_name); });
+  const total = cats.learning + cats.entertainment + cats.other;
+  return { total: total * 3, learning: cats.learning, entertainment: cats.entertainment, other: cats.other, appCount: appSet.size };
+}
+
+async function loadTimeline() {
+  const date = $('#timeline-date').value;
+  timelineDate = date;
+  try {
+    const data = await api('/usage/timeline/full?date=' + date);
+    renderTimeline(data, date);
+  } catch (e) {
+    $('#timeline-summary').innerHTML = '';
+    $('#timeline-blocks').innerHTML = `<div class="tl-empty"><div class="empty-icon">&#9888;</div>加载失败：${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderTimeline(data, date) {
+  const devices = data.devices || [];
+  if (!devices.length) {
+    $('#timeline-summary').innerHTML = '';
+    $('#timeline-blocks').innerHTML = `<div class="tl-empty"><div class="empty-icon">&#9716;</div>当日暂无活动数据</div>`;
+    return;
+  }
+
+  // Summary cards
+  let summaryHtml = '';
+  for (const dev of devices) {
+    const stats = computeDeviceStats(dev.events || []);
+    const total = stats.total;
+    const lPct = total > 0 ? (stats.learning * 100 / (stats.learning + stats.entertainment + stats.other)) : 0;
+    const ePct = total > 0 ? (stats.entertainment * 100 / (stats.learning + stats.entertainment + stats.other)) : 0;
+    const oPct = total > 0 ? (stats.other * 100 / (stats.learning + stats.entertainment + stats.other)) : 0;
+    const icon = PLATFORM_ICONS[dev.platform] || '&#9673;';
+    summaryHtml += `
+      <div class="tl-device-card">
+        <div class="tld-header">
+          <div class="tld-icon">${icon}</div>
+          <div><div class="tld-name">${escHtml(dev.device_name)}</div><div class="tld-platform">${dev.platform}</div></div>
+        </div>
+        <div class="tld-stats">
+          <div><div class="tld-stat-val">${fmtMinutes(total)}</div><div class="tld-stat-lbl">总时长</div></div>
+          <div><div class="tld-stat-val">${stats.appCount}</div><div class="tld-stat-lbl">应用数</div></div>
+          <div><div class="tld-stat-val">${Math.round(lPct)}%</div><div class="tld-stat-lbl">学习</div></div>
+        </div>
+        <div class="tld-bar">
+          <div class="learn" style="width:${lPct}%"></div>
+          <div class="entertain" style="width:${ePct}%"></div>
+          <div class="other" style="width:${oPct}%"></div>
+        </div>
+      </div>`;
+  }
+  $('#timeline-summary').innerHTML = summaryHtml;
+
+  // Vertical block list — all events from all devices sorted by time
+  let allBlocks = [];
+  for (const dev of devices) {
+    const merged = mergeTimelineEvents(dev.events || []);
+    for (const b of merged) {
+      allBlocks.push({
+        deviceName: dev.device_name,
+        platform: dev.platform,
+        start: fmtTime(b.start),
+        end: fmtTime(b.end),
+        category: b.category,
+        apps: b.apps,
+        startIso: b.start
+      });
+    }
+  }
+  allBlocks.sort((a, b) => a.startIso.localeCompare(b.startIso));
+
+  const catLabels = { learning: '学习', entertainment: '娱乐', other: '其他' };
+
+  if (!allBlocks.length) {
+    $('#timeline-blocks').innerHTML = `<div class="tl-empty"><div class="empty-icon">&#9716;</div>暂无详细活动记录</div>`;
+  } else {
+    $('#timeline-blocks').innerHTML = allBlocks.map(b => `
+      <div class="tl-block">
+        <span class="cat-dot ${b.category}"></span>
+        <div class="block-info">
+          <div class="block-app">${escHtml(b.apps.slice(0,3).join(', ') + (b.apps.length > 3 ? ' +' + (b.apps.length - 3) : ''))}</div>
+          <div class="block-cat">${catLabels[b.category] || '其他'} · ${escHtml(b.deviceName)}</div>
+        </div>
+        <div class="block-time">${b.start}<br>${b.end}</div>
+      </div>
+    `).join('');
+  }
+}
+
+// ═══ Devices ═══════════════════════════════════════
+
+$('#register-device-btn').addEventListener('click', async () => {
+  const name = $('#new-device-name').value.trim();
+  const platform = $('#new-device-platform').value;
+  if (!name) return alert('请输入设备名称');
+  try {
+    await api('/devices', { method: 'POST', body: JSON.stringify({ name, platform }) });
+    $('#new-device-name').value = '';
+    loadDevices();
+  } catch (e) { alert(e.message); }
+});
+
+async function loadDevices() {
+  try {
+    const devices = await api('/devices');
+    if (!devices?.length) {
+      $('#device-list').innerHTML = '<div class="tl-empty"><div class="empty-icon">&#9881;</div>暂无注册设备</div>';
+      return;
+    }
+    $('#device-list').innerHTML = devices.map(d => `
+      <div class="dev-item">
+        <div class="dev-item-info">
+          <span style="font-size:20px">${PLATFORM_ICONS[d.platform]||'&#9673;'}</span>
+          <span class="dev-item-name" id="dev-name-${d.id}">${escHtml(d.name)}</span>
+          <span class="badge">${d.platform}</span>
+          <span class="dev-item-date">${(d.registered_at||'').split('T')[0]}</span>
+        </div>
+        <div class="dev-item-actions">
+          <button class="btn-sm" onclick="editDevice(${d.id},'${d.name.replace(/'/g,"\\'")}','${d.platform}')">编辑</button>
+          <button class="btn-sm danger" onclick="delDevice(${d.id},'${d.name.replace(/'/g,"\\'")}')">删除</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { $('#device-list').innerHTML = '<p class="text-muted">加载失败</p>'; }
+}
+
+window.editDevice = async (id, oldName, platform) => {
+  const name = prompt('修改设备名称：', oldName);
+  if (!name || name === oldName) return;
+  try {
+    const r = await api(`/devices/${id}`, { method: 'PUT', body: JSON.stringify({ name }) });
+    const el = document.getElementById(`dev-name-${id}`);
+    if (el) el.textContent = r.name;
+  } catch (e) { alert(e.message); }
+};
+
+window.delDevice = async (id, name) => {
+  if (!confirm(`确认删除设备「${name}」？`)) return;
+  try { await api(`/devices/${id}`, { method: 'DELETE' }); loadDevices(); }
+  catch (e) { alert(e.message); }
+};
+
+// ═══ Schedule ═══════════════════════════════════════
+
+async function loadSchedule() {
+  try {
+    const status = await api('/user/llm-key/status');
+    if (status.configured) {
+      $('#api-key-missing').style.display = 'none';
+      $('#api-key-ok').style.display = 'block';
+    } else {
+      $('#api-key-missing').style.display = 'block';
+      $('#api-key-ok').style.display = 'none';
+    }
+  } catch (e) {
+    $('#api-key-missing').style.display = 'block';
+    $('#api-key-ok').style.display = 'none';
+  }
+  try {
+    const r = await api('/schedule/latest');
+    renderMarkdown(r.plan_markdown);
+  } catch (e) {
+    $('#schedule-content').innerHTML = '<p class="empty">暂无分析报告，点击上方按钮生成。</p>';
+  }
+}
+
+$('#save-api-key-btn').addEventListener('click', async () => {
+  const key = $('#api-key-input').value.trim();
+  if (!key) { alert('请输入您的 DeepSeek API Key'); return; }
+  try {
+    await api('/user/llm-key', { method: 'PUT', body: JSON.stringify({ api_key: key }) });
+    $('#api-key-input').value = '';
+    $('#api-key-missing').style.display = 'none';
+    $('#api-key-ok').style.display = 'block';
+  } catch (e) { alert('保存失败：' + e.message); }
+});
+
+$('#remove-api-key-btn').addEventListener('click', async () => {
+  if (!confirm('确认移除 API Key？')) return;
+  try {
+    await api('/user/llm-key', { method: 'DELETE' });
+    $('#api-key-missing').style.display = 'block';
+    $('#api-key-ok').style.display = 'none';
+  } catch (e) { alert(e.message); }
+});
+
+$('#generate-btn').addEventListener('click', async () => {
+  const btn = $('#generate-btn');
+  btn.textContent = '分析中...'; btn.disabled = true;
+  try {
+    const r = await api('/schedule/generate', { method: 'POST', body: JSON.stringify({ include_calendar: false }) });
+    renderMarkdown(r.plan_markdown);
+  } catch (e) {
+    $('#schedule-content').innerHTML = `<p style="color:var(--red)">${escHtml(e.message)}</p>`;
+  }
+  btn.textContent = '生成行为分析'; btn.disabled = false;
+});
+
+function renderMarkdown(md) {
+  if (!md) { $('#schedule-content').innerHTML = '<p class="empty">暂无分析报告</p>'; return; }
+  let html = md
+    .replace(/### (.*)/g, '<h3>$1</h3>')
+    .replace(/## (.*)/g, '<h2>$1</h2>')
+    .replace(/---/g, '<hr>')
+    .replace(/> (.*)/g, '<blockquote>$1</blockquote>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/- \[ \] (.*)/g, '<li>&#9744; $1</li>')
+    .replace(/- (.*)/g, '<li>$1</li>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+  $('#schedule-content').innerHTML = '<p>' + html + '</p>';
+}
+
+// ═══ Friends ═══════════════════════════════════════
+
+$('#send-friend-request').addEventListener('click', async () => {
+  const email = $('#friend-email').value.trim();
+  if (!email) return;
+  try {
+    await api('/friends/request', { method: 'POST', body: JSON.stringify({ email }) });
+    alert('好友请求已发送！');
+    $('#friend-email').value = '';
+    loadFriends();
+  } catch (e) { alert(e.message); }
+});
+
+async function loadFriends() {
+  try {
+    const [reqs, friends] = await Promise.all([api('/friends/requests'), api('/friends')]);
+    $('#received-requests').innerHTML = (reqs.received || []).map(r => `
+      <div class="req-card">
+        <div class="info"><span class="name">${escHtml(r.display_name)}</span><span class="email">${escHtml(r.email)}</span></div>
+        <div class="actions">
+          <button class="btn-sm btn-accept" onclick="acceptReq(${r.id})">接受</button>
+          <button class="btn-sm btn-deny" onclick="denyReq(${r.id})">拒绝</button>
+        </div>
+      </div>`).join('') || '<p class="text-muted">暂无待处理的请求</p>';
+
+    $('#sent-requests').innerHTML = (reqs.sent || []).map(r => `
+      <div class="req-card">
+        <div class="info"><span class="name">${escHtml(r.display_name)}</span><span class="email">${escHtml(r.email)}</span></div>
+        <span class="text-muted">等待回应</span>
+      </div>`).join('') || '<p class="text-muted">暂无已发送的请求</p>';
+
+    $('#friends-list').innerHTML = (friends.friends || []).map(f => `
+      <div class="friend-card">
+        <div class="info"><span class="name">${escHtml(f.display_name)}</span><span class="email">${escHtml(f.email)}</span></div>
+        <div class="share-row">
+          <label><input type="checkbox" ${f.share_usage?'checked':''} onchange="updateShare(${f.friend_id},{share_usage:this.checked})"> 使用</label>
+          <label><input type="checkbox" ${f.share_schedule?'checked':''} onchange="updateShare(${f.friend_id},{share_schedule:this.checked})"> 计划</label>
+        </div>
+        <div class="actions">
+          <button class="btn-sm btn-accept" onclick="viewFriendTL(${f.friend_id},'${escHtml(f.display_name)}')">时间线</button>
+          <button class="btn-sm btn-remove" onclick="removeFriend(${f.friend_id})">&#10005;</button>
+        </div>
+      </div>`).join('') || '<p class="text-muted">暂无好友</p>';
+  } catch (e) { console.error(e); }
+}
+
+window.acceptReq = async id => { await api(`/friends/accept/${id}`, { method:'POST' }); loadFriends(); };
+window.denyReq = async id => { await api(`/friends/deny/${id}`, { method:'POST' }); loadFriends(); };
+window.removeFriend = async id => { if (confirm('确认删除该好友？')) { await api(`/friends/remove/${id}`, { method:'DELETE' }); loadFriends(); } };
+window.updateShare = async (friendId, data) => { await api(`/friends/share/${friendId}`, { method:'PUT', body: JSON.stringify(data) }); };
+
+window.viewFriendTL = async (friendId, name) => {
+  const date = $('#timeline-date').value || new Date().toISOString().split('T')[0];
+  try {
+    const data = await api(`/friends/${friendId}/timeline?date=${date}`);
+    data.devices = (data.devices||[]).map(d => ({...d, device_name: `[${name}] ${d.device_name}`}));
+    renderTimeline(data, date);
+    $$('.tab-item').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab-item[data-page="timeline"]').classList.add('active');
+    $$('.page').forEach(p => p.classList.remove('active'));
+    $('#page-timeline').classList.add('active');
+    $('#header-title').textContent = '时间线';
+    $('#timeline-summary').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) { alert(e.message); }
+};
+</script>
+</body>
+</html>
