@@ -2,8 +2,8 @@
 """
 ScreenPlan QQ Bot — Lightweight AI Agent via OneBot v11 WebSocket.
 
-Connects to NapCatQQ as a reverse WebSocket client, listens for QQ group/private
-messages, and uses DeepSeek function-calling to answer ScreenPlan admin queries.
+Acts as a WebSocket SERVER that NapCatQQ connects TO (reverse WS).
+Receives QQ messages, uses DeepSeek function-calling for admin queries.
 
 Dependencies (pip install):
     websockets
@@ -19,10 +19,13 @@ import time
 from datetime import date
 
 import httpx
+import websockets
+from websockets.asyncio.server import serve
 
 # ─── Config (env vars) ────────────────────────────────────
 
-NAP_CAT_WS_URL = os.environ.get("SPBOT_NAPCAT_WS", "ws://localhost:3001")
+SPBOT_LISTEN_HOST = os.environ.get("SPBOT_LISTEN_HOST", "0.0.0.0")
+SPBOT_LISTEN_PORT = int(os.environ.get("SPBOT_LISTEN_PORT", "3001"))
 SPBOT_COMMAND_PREFIX = os.environ.get("SPBOT_PREFIX", "/")
 SPBOT_ADMIN_TOKEN = os.environ.get("SPBOT_ADMIN_TOKEN", "")
 SCREENPLAN_HOST = os.environ.get("SPBOT_SCREENPLAN_HOST", "http://localhost:5051")
@@ -85,21 +88,46 @@ FUNCTIONS = [
     },
 ]
 
-SYSTEM_PROMPT = """你是 ScreenPlan 的管理员 AI 助手，通过 QQ 消息为用户提供屏幕使用数据查询和服务器管理服务。
+SYSTEM_PROMPT = """你是 ScreenPlan 的管理员 AI 助手，通过 QQ 消息提供屏幕使用数据查询和服务器管理。
 
 你的能力：
-1. 查询所有用户列表（query_user_list）
+1. 查询所有用户列表及ID（query_user_list）
 2. 查询任意用户的屏幕使用摘要（query_user_usage）
 3. 查询任意用户的时间线详情（query_user_timeline）
 4. 查询服务器运行状态（query_server_status）
 
-规则：
-- 回复使用简洁专业的中文，数据用易读格式呈现
-- 时长数据用 小时+分钟 格式呈现（如 "5h28min"）
-- 如果用户说"我"或"我的"，询问具体想看哪个用户的ID或名字
-- 不要编造数据，必须通过调用函数获取真实数据
-- 如果查询不到数据，如实告知
-- 格式友好但突出重点"""
+输出规则：
+- QQ 不支持 Markdown 表格和加粗语法。严禁使用 **bold**、| 表格 |、### 标题 等格式
+- 使用纯文本分行 + 空格缩进排列数据，每项单独一行，层次清晰
+- 时长单位统一用「小时 分钟」，如 "5h33min"
+- 百分比紧跟在对应数据后，如 "学习 78%  娱乐 14%  其他 8%"
+- 回答控制在 15 行以内，信息密集不废话
+- 所有数字必须来自函数返回的真实数据，严禁编造
+- 如果用户说"我"或"我的"，询问用户ID或名字再查
+
+屏幕使用摘要标准格式示例：
+━━ 张三（2026-05-05）━━
+总屏幕时间：6h05min  重叠：3h19min
+  Mac（macOS）：5h33min | 学习78% 娱乐14% 其他8%
+  Tab（Android）：2h27min | 学习22% 娱乐69% 其他9%
+  PC（Windows）：1h24min | 学习4% 娱乐96% 其他0%
+
+用户列表标准格式示例：
+共 3 个用户：
+  ID:1  zmy（2960751877@qq.com）
+  ID:3  TestUser（test@test.com）
+  ID:4  明宇（3131423482@qq.com）
+
+时间线标准格式示例：
+━━ 张三（2026-05-05）时间线 ━━
+共 175 个活动事件
+  Mac（macOS）：100 事件
+    08:30 VS Code [learning]
+    09:00 Chrome [learning]
+    ...（只列最近 5 条）
+  PC（Windows）：28 事件
+    14:00 微信 [other]
+    ...（只列最近 5 条）"""
 
 
 # ─── HTTP helpers ─────────────────────────────────────────
@@ -274,12 +302,18 @@ async def handle_message(msg: dict):
 
 # ─── OneBot sender ────────────────────────────────────────
 
+# Map of connected NapCatQQ clients: {self_id: websocket}
+_ws_clients: dict[str, websockets.WebSocketServerProtocol] = {}
+
+
 async def send_reply(msg: dict, text: str):
-    """Send a reply back via the WebSocket connection."""
-    global _ws_connection
-    if not _ws_connection:
-        log.warning("No WebSocket connection, cannot send reply")
+    """Send a reply back via the appropriate WebSocket connection."""
+    # Find a connected client (usually there is only one)
+    if not _ws_clients:
+        log.warning("No NapCatQQ client connected, cannot send reply")
         return
+
+    ws = next(iter(_ws_clients.values()))
 
     msg_type = msg.get("message_type", "private")
     send_payload = {
@@ -295,47 +329,58 @@ async def send_reply(msg: dict, text: str):
         send_payload["params"]["user_id"] = msg.get("user_id") or msg.get("sender", {}).get("user_id")
 
     try:
-        await _ws_connection.send(json.dumps(send_payload, ensure_ascii=False))
+        await ws.send(json.dumps(send_payload, ensure_ascii=False))
     except Exception as e:
         log.error(f"Failed to send reply: {e}")
 
 
-_ws_connection = None
+async def handle_ws_connection(ws: websockets.WebSocketServerProtocol):
+    """Handle a single NapCatQQ WebSocket connection."""
+    peer = ws.remote_address
+    log.info(f"NapCatQQ connected from {peer}")
+
+    try:
+        async for raw in ws:
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+
+            post_type = data.get("post_type", "")
+
+            # Handle meta_event: identify the bot's self_id
+            if post_type == "meta_event":
+                meta_type = data.get("meta_event_type", "")
+                if meta_type == "lifecycle":
+                    self_id = str(data.get("self_id", ""))
+                    if self_id:
+                        _ws_clients[self_id] = ws
+                        log.info(f"Bot self_id: {self_id}")
+                continue
+
+            # Handle message events
+            if post_type == "message":
+                msg_type = data.get("message_type", "")
+                if msg_type in ("group", "private"):
+                    asyncio.create_task(handle_message(data))
+
+    except websockets.exceptions.ConnectionClosed:
+        log.info(f"NapCatQQ disconnected: {peer}")
+    except Exception as e:
+        log.error(f"WS error: {e}")
+    finally:
+        # Clean up
+        for k, v in list(_ws_clients.items()):
+            if v is ws:
+                del _ws_clients[k]
 
 
-async def ws_listen():
-    """Connect to NapCatQQ WebSocket and listen for messages."""
-    global _ws_connection
-    log.info(f"Connecting to NapCatQQ WebSocket: {NAP_CAT_WS_URL}")
-
-    while True:
-        try:
-            async with httpx.AsyncClient(timeout=30) as _:
-                from websockets.asyncio.client import connect
-                async with connect(NAP_CAT_WS_URL, ping_interval=30) as ws:
-                    _ws_connection = ws
-                    log.info("Connected to NapCatQQ")
-
-                    async for raw in ws:
-                        try:
-                            data = json.loads(raw)
-                        except json.JSONDecodeError:
-                            continue
-
-                        # Handle OneBot events
-                        post_type = data.get("post_type", "")
-                        if post_type == "message":
-                            # Check if it's a meta_event
-                            if data.get("message_type") in ("group", "private"):
-                                asyncio.create_task(handle_message(data))
-                            elif data.get("meta_event_type") == "heartbeat":
-                                pass  # ignore heartbeat
-                        elif post_type == "meta_event":
-                            pass
-        except Exception as e:
-            log.error(f"WebSocket error: {e}. Reconnecting in 10s...")
-            _ws_connection = None
-            await asyncio.sleep(10)
+async def ws_server():
+    """Start WebSocket server for NapCatQQ to connect to."""
+    addr = (SPBOT_LISTEN_HOST, SPBOT_LISTEN_PORT)
+    log.info(f"WebSocket server listening on ws://{SPBOT_LISTEN_HOST}:{SPBOT_LISTEN_PORT}")
+    async with serve(handle_ws_connection, SPBOT_LISTEN_HOST, SPBOT_LISTEN_PORT) as server:
+        await asyncio.Future()  # run forever
 
 
 # ─── Main ─────────────────────────────────────────────────
@@ -347,7 +392,7 @@ async def main():
     if not LLM_API_KEY:
         log.fatal("SPBOT_LLM_KEY not set. Please configure your environment.")
         return
-    await ws_listen()
+    await ws_server()
 
 
 if __name__ == "__main__":
