@@ -168,16 +168,13 @@ def user_usage(user_id):
 
         # Compute union duration (overlap)
         union_total = 0.0
-        sum_total = 0.0
         if len(all_timestamps) >= 2:
             sorted_ts = sorted(all_timestamps)
-            intervals = []
-            for ts in sorted_ts:
-                intervals.append((ts, ts.timestamp() + RECORD_INTERVAL_MIN * 60))
+            intervals = [(ts.timestamp(), ts.timestamp() + RECORD_INTERVAL_MIN * 60) for ts in sorted_ts]
             intervals.sort()
             merged_start, merged_end = intervals[0]
             for s, e in intervals[1:]:
-                if s.timestamp() <= merged_end:
+                if s <= merged_end:
                     merged_end = max(merged_end, e)
                 else:
                     union_total += (merged_end - merged_start) / 60
@@ -186,11 +183,16 @@ def user_usage(user_id):
         elif all_timestamps:
             union_total = RECORD_INTERVAL_MIN
 
-        sum_total = sum(
+        # Compute sum of all device totals for overlap calculation
+        devices_total = sum(
             sum(v["duration_minutes"] for v in app_map.values())
             for dev in devices
-            for _ in [None]
-        ) if devices else 0
+            for app_map_raw in [
+                defaultdict(lambda: {"duration_minutes": 0.0})
+            ]
+        )
+        # Simpler: compute from device_summaries already built above
+        sum_total = sum(ds["total_minutes"] for ds in device_summaries)
         overlap = round(max(sum_total - union_total, 0.0), 1)
 
     return jsonify({
