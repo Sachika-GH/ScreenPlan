@@ -16,6 +16,7 @@ import logging
 import os
 import re
 import time
+from collections import defaultdict
 from datetime import date
 
 import httpx
@@ -88,46 +89,69 @@ FUNCTIONS = [
     },
 ]
 
-SYSTEM_PROMPT = """你是 ScreenPlan 的管理员 AI 助手，通过 QQ 消息提供屏幕使用数据查询和服务器管理。
+SYSTEM_PROMPT = """你是一个友好、博学的 AI 助手，通过 QQ 消息为用户服务。你同时具备 ScreenPlan 管理员权限，可以查询关联用户的屏幕使用数据。
 
-你的能力：
-1. 查询所有用户列表及ID（query_user_list）
-2. 查询任意用户的屏幕使用摘要（query_user_usage）
-3. 查询任意用户的时间线详情（query_user_timeline）
-4. 查询服务器运行状态（query_server_status）
+你的双重身份：
+★ 通用 AI 助手 —— 回答知识问答、闲聊、编程建议、日常问题等，像一个正常的 AI 助手一样对话
+★ ScreenPlan 管理员 —— 当用户询问屏幕时间、使用情况、时间线、用户列表、服务器状态时，调用相应的函数获取真实数据
 
-输出规则：
-- QQ 不支持 Markdown 表格和加粗语法。严禁使用 **bold**、| 表格 |、### 标题 等格式
-- 使用纯文本分行 + 空格缩进排列数据，每项单独一行，层次清晰
-- 时长单位统一用「小时 分钟」，如 "5h33min"
-- 百分比紧跟在对应数据后，如 "学习 78%  娱乐 14%  其他 8%"
-- 回答控制在 15 行以内，信息密集不废话
-- 所有数字必须来自函数返回的真实数据，严禁编造
-- 如果用户说"我"或"我的"，询问用户ID或名字再查
+调函数的判断标准（满足其一即调用）：
+- 消息中提到"屏幕"、"用了多久"、"屏幕时间"、"使用情况"、"学了多久"、"在用哪些应用"
+- 消息中提到某个用户名并怀疑在询问使用数据
+- 消息中提到"时间线"、"活动事件"、"设备列表"
+- 消息中提到"有哪些用户"、"用户列表"、"注册用户"
+- 消息中提到"服务器"、"系统状态"、"运行时间"
+- 消息中出现了明确的用户ID（如"用户1"、"ID:3"）
 
-屏幕使用摘要标准格式示例：
-━━ 张三（2026-05-05）━━
+通用对话规则：
+- 对于知识问答、编程问题、闲聊等非 ScreenPlan 话题，直接用自己的知识回答，不要调函数
+- 回复保持友好、简洁，用中文
+- 不要编造屏幕使用数据——涉及数据必须调函数
+- 如果函数返回"User not found"，如实告知用户
+
+ScreenPlan 数据输出规则：
+- QQ 不支持 Markdown 表格和加粗。严禁使用 **bold**、| 表格 |、### 标题
+- 纯文本分行 + 空格缩进排列，每项独立一行
+- 时长用「小时 分钟」如 "5h33min"
+- 百分比紧接数据，如 "学习78% 娱乐14% 其他8%"
+- 数据回复控制在 15 行以内
+- 如果用户说"我"/"我的"，不知道该查谁时询问ID或名字
+
+格式示例：
+━━ zmy（2026-05-05）━━
 总屏幕时间：6h05min  重叠：3h19min
   Mac（macOS）：5h33min | 学习78% 娱乐14% 其他8%
-  Tab（Android）：2h27min | 学习22% 娱乐69% 其他9%
-  PC（Windows）：1h24min | 学习4% 娱乐96% 其他0%
+  Tab（Android）：2h27min | 学习22% 娱乐69% 其他9%"""
 
-用户列表标准格式示例：
-共 3 个用户：
-  ID:1  zmy（2960751877@qq.com）
-  ID:3  TestUser（test@test.com）
-  ID:4  明宇（3131423482@qq.com）
+# ─── Conversation History ─────────────────────────────────
 
-时间线标准格式示例：
-━━ 张三（2026-05-05）时间线 ━━
-共 175 个活动事件
-  Mac（macOS）：100 事件
-    08:30 VS Code [learning]
-    09:00 Chrome [learning]
-    ...（只列最近 5 条）
-  PC（Windows）：28 事件
-    14:00 微信 [other]
-    ...（只列最近 5 条）"""
+MAX_HISTORY_ROUNDS = 15      # keep last 15 exchange rounds
+HISTORY_EXPIRE_SECONDS = 1800  # 30 min inactivity clears history
+_history: dict[str, list[dict]] = defaultdict(list)
+_last_active: dict[str, float] = {}
+
+
+def _chat_key(msg: dict) -> str:
+    """Derive a per-chat key for storing conversation history."""
+    mt = msg.get("message_type", "private")
+    if mt == "group":
+        return f"g_{msg.get('group_id', '0')}"
+    uid = msg.get("user_id") or msg.get("sender", {}).get("user_id", "0")
+    return f"p_{uid}"
+
+
+def _expire_old(ck: str):
+    now = time.time()
+    if ck in _last_active and (now - _last_active[ck]) > HISTORY_EXPIRE_SECONDS:
+        _history.pop(ck, None)
+        _last_active.pop(ck, None)
+
+
+def _trim_history(ck: str):
+    h = _history[ck]
+    max_msgs = MAX_HISTORY_ROUNDS * 2  # user + assistant per round
+    if len(h) > max_msgs:
+        _history[ck] = h[-max_msgs:]
 
 
 # ─── HTTP helpers ─────────────────────────────────────────
@@ -144,8 +168,12 @@ def admin_api(path: str) -> dict:
         return {"error": str(e)}
 
 
-async def call_llm(messages: list) -> str:
-    """Call DeepSeek chat/completions with function calling."""
+async def call_llm(messages: list, data_mode: bool = False) -> str:
+    """Call DeepSeek chat/completions with function calling.
+    
+    data_mode=True → low temperature for factual responses (ScreenPlan queries)
+    data_mode=False → higher temperature for natural conversation
+    """
     headers = {
         "Authorization": f"Bearer {LLM_API_KEY}",
         "Content-Type": "application/json",
@@ -155,7 +183,7 @@ async def call_llm(messages: list) -> str:
         "messages": messages,
         "tools": FUNCTIONS,
         "tool_choice": "auto",
-        "temperature": 0.3,
+        "temperature": 0.1 if data_mode else 0.7,
         "max_tokens": 2048,
     }
 
@@ -267,17 +295,25 @@ async def handle_message(msg: dict):
 
     log.info(f"Processing: [{user_id}] {query[:80]}")
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"用户ID {user_id} 说：{query}"},
-    ]
+    ck = _chat_key(msg)
+    _expire_old(ck)
+    _last_active[ck] = time.time()
+
+    # Build messages: system prompt + history + current query
+    history = _history.get(ck, [])
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend(history)
+    messages.append({"role": "user", "content": f"用户ID {user_id} 说：{query}"})
+
+    used_functions = False
 
     # LLM conversation loop (handle function calls)
-    for _ in range(5):  # max 5 tool call rounds
-        response = await call_llm(messages)
+    for round_num in range(5):  # max 5 tool call rounds
+        response = await call_llm(messages, data_mode=used_functions)
         messages.append(response)
 
         if response.get("tool_calls"):
+            used_functions = True
             for tc in response["tool_calls"]:
                 func = tc["function"]
                 fname = func["name"]
@@ -294,9 +330,18 @@ async def handle_message(msg: dict):
                 })
         elif response.get("content"):
             reply = response["content"]
+            # Store in history
+            h = _history[ck]
+            h.append({"role": "user", "content": query})
+            h.append({"role": "assistant", "content": reply})
+            _trim_history(ck)
             await send_reply(msg, reply)
             return
 
+    # Fallback: LLM didn't produce final text content
+    _history[ck].append({"role": "user", "content": query})
+    _history[ck].append({"role": "assistant", "content": "抱歉，处理超时，请稍后重试。"})
+    _trim_history(ck)
     await send_reply(msg, "抱歉，处理超时，请稍后重试。")
 
 
